@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	contentlinter "github.com/jeonghyeon-net/jeonghyeon.net/transformer/content-linter"
 )
 
 func main() {
@@ -21,7 +23,15 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Usage: transformer lint <content-dir>")
 			os.Exit(1)
 		}
-		fmt.Printf("lint: content-dir=%s\n", args[0])
+		errs := contentlinter.LintDir(args[0])
+		if len(errs) > 0 {
+			for _, e := range errs {
+				fmt.Fprintln(os.Stderr, e)
+			}
+			fmt.Fprintf(os.Stderr, "\n%d error(s) found\n", len(errs))
+			os.Exit(1)
+		}
+		fmt.Println("lint passed")
 
 	case "index":
 		if len(args) != 1 {
