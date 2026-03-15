@@ -272,6 +272,68 @@ func Render(contentDir, distDir string) error {
 	return nil
 }
 
+// RenderSingle converts a single markdown file to a full HTML page and writes it to w.
+// It loads config, header, and footer from contentDir, but does not generate
+// sitemap, feed, or llms.txt.
+func RenderSingle(contentDir, mdPath string, w io.Writer) error {
+	cfg := markdownutil.LoadConfig(contentDir)
+	siteURL := cfg.URL
+
+	headerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "header", "index.md"))
+	if err != nil {
+		return fmt.Errorf("read header/index.md: %w", err)
+	}
+	footerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "footer", "index.md"))
+	if err != nil {
+		return fmt.Errorf("read footer/index.md: %w", err)
+	}
+
+	headerHTML, err := markdownutil.MarkdownToHTML(headerSrc)
+	if err != nil {
+		return fmt.Errorf("convert header.md: %w", err)
+	}
+	footerHTML, err := markdownutil.MarkdownToHTML(footerSrc)
+	if err != nil {
+		return fmt.Errorf("convert footer.md: %w", err)
+	}
+
+	headerHTML = strings.TrimRight(headerHTML, "\n")
+	footerHTML = strings.TrimRight(footerHTML, "\n")
+
+	src, err := os.ReadFile(mdPath)
+	if err != nil {
+		return fmt.Errorf("read %s: %w", mdPath, err)
+	}
+
+	title := markdownutil.ExtractH1(src)
+	description := markdownutil.ExtractFirstParagraph(src)
+	firstImage := markdownutil.ExtractFirstImage(src)
+
+	bodyHTML, err := markdownutil.MarkdownToHTML(src)
+	if err != nil {
+		return fmt.Errorf("convert %s: %w", mdPath, err)
+	}
+
+	relPath, err := filepath.Rel(contentDir, mdPath)
+	if err != nil {
+		return fmt.Errorf("rel path: %w", err)
+	}
+	slashRel := filepath.ToSlash(relPath)
+	pageURL := relPathToURL(slashRel, siteURL)
+
+	imageURL := ""
+	if firstImage != "" && !strings.HasPrefix(firstImage, "http") {
+		dir := filepath.Dir(slashRel)
+		imageURL = siteURL + "/" + filepath.ToSlash(filepath.Join(dir, firstImage))
+	} else {
+		imageURL = firstImage
+	}
+
+	html := pageTemplate(cfg, title, description, pageURL, siteURL, imageURL, headerHTML, bodyHTML, footerHTML)
+	_, err = io.WriteString(w, html)
+	return err
+}
+
 func writeSitemap(distDir string, pages []pageInfo) error {
 	var sb strings.Builder
 	sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")

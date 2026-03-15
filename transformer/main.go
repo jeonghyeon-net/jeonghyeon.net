@@ -19,7 +19,7 @@ import (
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintln(os.Stderr, "Usage: transformer <command> [args]")
-		fmt.Fprintln(os.Stderr, "Commands: lint, index, render, minify, build, check, watch")
+		fmt.Fprintln(os.Stderr, "Commands: lint, index, render, render-single, minify, build, check, watch")
 		os.Exit(1)
 	}
 
@@ -142,6 +142,13 @@ func main() {
 		}
 		fmt.Println("check passed")
 
+	case "render-single":
+		if len(args) != 2 {
+			fmt.Fprintln(os.Stderr, "Usage: transformer render-single <content-dir> <md-path>")
+			os.Exit(1)
+		}
+		err = mdtohtml.RenderSingle(args[0], args[1], os.Stdout)
+
 	case "watch":
 		if len(args) != 2 {
 			fmt.Fprintln(os.Stderr, "Usage: transformer watch <content-dir> <dist-dir>")
@@ -151,7 +158,7 @@ func main() {
 
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
-		fmt.Fprintln(os.Stderr, "Commands: lint, index, render, minify, build, check, watch")
+		fmt.Fprintln(os.Stderr, "Commands: lint, index, render, render-single, minify, build, check, watch")
 		os.Exit(1)
 	}
 
