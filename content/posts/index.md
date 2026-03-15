@@ -1,4 +1,3 @@
 # 글
 
-- [Building A Static Site](building-a-static-site/)
-- [Hello, World !](hello-world/)
+- [Golang For Nodejs Developers](golang-for-nodejs-developers/)

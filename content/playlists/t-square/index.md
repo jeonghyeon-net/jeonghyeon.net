@@ -8,9 +8,9 @@
 
 Casiopea, Prism, Naniwa Express 등과 함께 일본 재즈 퓨전(J-Fusion)의 전성기를 이끌었다. 매년 1장 이상 앨범을 발표하는 왕성한 활동을 지속했고, 키보디스트 이즈미 히로타카(和泉宏隆)가 합류하면서 밴드의 작곡 역량이 크게 확장되었다.
 
-슬프게도, 밴드가 창설된 후로 많은 시간이 흐른만큼 창립 멤버 중에 사망한 인물도 있다.
+슬프게도, 밴드가 창설된 후로 많은 시간이 흐른만큼 창립 멤버 중에 사망한 인물도 있다. 지금은 색소포니스트 이토 타케시를 제외한 모든 인원이 교체되었다.
 
-[블루 자이언트](https://www.youtube.com/watch?v=UDfwxhbK7wo)를 보고 난 다음에 알게 된 밴드인지라, 색소폰이 더욱 인상적으로 귀에 때려박혀서 좋았다. 밝고 경쾌하며 드라이브 감이 있는 리듬이 특징이다.
+[블루 자이언트](https://www.youtube.com/watch?v=UDfwxhbK7wo)를 보고 난 후에 발견한 밴드인지라, 색소폰이 더욱 인상적으로 귀에 때려박혀서 좋았다. 밝고 경쾌하며 드라이브 감이 있는 리듬이 특징이다. 피아노과 색소폰이 서로 주고 받는게 마치 죽마고우와 정겹게 대화하는 느낌이다.
 
 ## 내 추천 픽
 
@@ -21,4 +21,6 @@ Casiopea, Prism, Naniwa Express 등과 함께 일본 재즈 퓨전(J-Fusion)의 
 - [Omens Of Love](https://www.youtube.com/watch?v=ifmFkKRhc8E&list=RDifmFkKRhc8E)
 - [Cry For The Moon](https://www.youtube.com/watch?v=iPTOYpbgU3M&list=RDiPTOYpbgU3M)
 - [Cape Light](https://www.youtube.com/watch?v=zVuDAcnqG3Y)
-
+- [Sister Marian](https://www.youtube.com/watch?v=9jicFDOPKM8)
+- [
+Samurai Metropolis](https://www.youtube.com/watch?v=cpVr2RdtJt8&list=RDcpVr2RdtJt8)
