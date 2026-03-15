@@ -6,6 +6,7 @@ import (
 
 	autoindex "github.com/jeonghyeon-net/jeonghyeon.net/transformer/auto-index"
 	contentlinter "github.com/jeonghyeon-net/jeonghyeon.net/transformer/content-linter"
+	htmlminifier "github.com/jeonghyeon-net/jeonghyeon.net/transformer/html-minifier"
 	mdtohtml "github.com/jeonghyeon-net/jeonghyeon.net/transformer/md-to-html"
 )
 
@@ -71,14 +72,45 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Usage: transformer minify <dist-dir>")
 			os.Exit(1)
 		}
-		fmt.Printf("minify: dist-dir=%s\n", args[0])
+		err = htmlminifier.MinifyDir(args[0])
+		if err == nil {
+			fmt.Println("minify complete:", args[0])
+		}
 
 	case "build":
 		if len(args) != 3 {
 			fmt.Fprintln(os.Stderr, "Usage: transformer build <content-dir> <dist-dir> <site-url>")
 			os.Exit(1)
 		}
-		fmt.Printf("build: content-dir=%s dist-dir=%s site-url=%s\n", args[0], args[1], args[2])
+		contentDir, distDir, siteURL := args[0], args[1], args[2]
+		// lint
+		lintErrs := contentlinter.LintDir(contentDir)
+		if len(lintErrs) > 0 {
+			for _, e := range lintErrs {
+				fmt.Fprintln(os.Stderr, e)
+			}
+			fmt.Fprintf(os.Stderr, "\n%d error(s) found\n", len(lintErrs))
+			os.Exit(1)
+		}
+		// index
+		generated, genErr := autoindex.Generate(contentDir)
+		if genErr != nil {
+			err = genErr
+			break
+		}
+		if _, writeErr := autoindex.WriteGenerated(contentDir, generated); writeErr != nil {
+			err = writeErr
+			break
+		}
+		// render
+		if err = mdtohtml.Render(contentDir, distDir, siteURL); err != nil {
+			break
+		}
+		// minify
+		if err = htmlminifier.MinifyDir(distDir); err != nil {
+			break
+		}
+		fmt.Println("build complete:", distDir)
 
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
