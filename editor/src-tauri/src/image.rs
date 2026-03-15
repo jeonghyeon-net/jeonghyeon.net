@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::Command;
 
-use crate::util::is_safe_path;
+use crate::util::{extended_path, is_safe_path};
 
 const MAX_DIM: u32 = 700;
 
@@ -45,6 +45,7 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
         let width_output = Command::new("sips")
             .args(["-g", "pixelWidth"])
             .arg(&copied)
+            .env("PATH", extended_path())
             .output()
             .map_err(|e| format!("Failed to run sips (width): {}", e))?;
         let width_str = String::from_utf8_lossy(&width_output.stdout);
@@ -58,6 +59,7 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
         let height_output = Command::new("sips")
             .args(["-g", "pixelHeight"])
             .arg(&copied)
+            .env("PATH", extended_path())
             .output()
             .map_err(|e| format!("Failed to run sips (height): {}", e))?;
         let height_str = String::from_utf8_lossy(&height_output.stdout);
@@ -98,6 +100,7 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
 
         let output = Command::new("cwebp")
             .args(&args)
+            .env("PATH", extended_path())
             .output()
             .map_err(|e| format!("Failed to run cwebp: {}", e))?;
 
