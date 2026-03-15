@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -273,6 +274,7 @@ func watch(contentDir, distDir string) error {
 
 	// Debounce: wait for quiet period before rebuilding
 	var timer *time.Timer
+	var rebuilding atomic.Bool
 
 	for {
 		select {
@@ -285,6 +287,11 @@ func watch(contentDir, distDir string) error {
 				if info, statErr := os.Stat(event.Name); statErr == nil && info.IsDir() {
 					watcher.Add(event.Name)
 				}
+			}
+
+			// Ignore events during rebuild (auto-index writes index.md back into content/)
+			if rebuilding.Load() {
+				continue
 			}
 
 			// Trigger rebuild on delete or relevant file changes
@@ -302,7 +309,9 @@ func watch(contentDir, distDir string) error {
 				timer.Stop()
 			}
 			timer = time.AfterFunc(300*time.Millisecond, func() {
+				rebuilding.Store(true)
 				rebuild(contentDir, distDir)
+				rebuilding.Store(false)
 			})
 
 		case watchErr, ok := <-watcher.Errors:

@@ -161,6 +161,11 @@ func WriteGenerated(contentDir string, generated map[string]string) ([]string, e
 			return created, fmt.Errorf("mkdir %s: %w", filepath.Dir(absPath), err)
 		}
 
+		// Skip write if content is unchanged to avoid triggering file watchers
+		if existing, err := os.ReadFile(absPath); err == nil && string(existing) == content {
+			continue
+		}
+
 		if err := os.WriteFile(absPath, []byte(content), 0644); err != nil {
 			return created, fmt.Errorf("write %s: %w", absPath, err)
 		}
