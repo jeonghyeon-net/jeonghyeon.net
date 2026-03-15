@@ -1,3 +1,18 @@
+# build
 dist/
-docs/
 transformer/transformer
+.last-build
+
+# docs
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
