@@ -1,6 +1,6 @@
 # 왜 Go인가
 
-Node.js 개발자가 Go를 배워야 하는 이유를 런타임 모델, 배포 방식, 타입 시스템, 컴파일 사이클 네 가지 축으로 살펴본다.
+TypeScript + Node.js 개발자가 Go를 배워야 하는 이유를 런타임 모델, 배포 방식, 타입 시스템, 컴파일 사이클 네 가지 축으로 살펴본다. 시리즈 전체에서 비교 대상은 TypeScript + Node.js 환경이다.
 
 ## 45분짜리 빌드가 낳은 언어
 
@@ -126,7 +126,7 @@ type Reader interface {
 
 ## 컴파일: guardrail로서의 컴파일러
 
-Node.js 개발 사이클은 edit-run이다. 파일을 수정하고 `node app.js`를 실행한다. 틀린 코드도 해당 경로가 실행되기 전까지는 문제가 드러나지 않는다.
+순수 JavaScript의 개발 사이클은 edit-run이다. 파일을 수정하고 `node app.js`를 실행한다. 틀린 코드도 해당 경로가 실행되기 전까지는 문제가 드러나지 않는다. TypeScript를 쓰면 `tsc`나 빌드 도구를 통한 컴파일 단계가 추가되므로 edit-compile-run에 가까워지지만, 타입 에러가 있어도 JavaScript로 emit되는 경우가 많고(`noEmitOnError` 설정에 의존), 런타임 검사는 여전히 없다.
 
 Go 개발 사이클은 edit-compile-run이다. `go run main.go`를 실행하면 내부적으로 컴파일이 먼저 일어난다. 컴파일이 실패하면 실행되지 않는다.
 
@@ -155,7 +155,7 @@ func main() {
 x declared and not used
 ```
 
-Node.js에서 lint rule로 잡는 것들이 Go에서는 컴파일러 레벨에서 강제된다.
+Node.js에서 ESLint rule로 잡는 것들이 Go에서는 컴파일러 레벨에서 강제된다. TypeScript의 `noUnusedLocals`, `noUnusedParameters` 옵션이 비슷한 역할을 하지만, Go는 이것이 끌 수 없는 기본값이다.
 
 REPL은 없다. Node.js처럼 `node`를 입력하고 한 줄씩 실행하는 환경이 Go에는 기본 제공되지 않는다. 대신 Go Playground(https://go.dev/play/)가 있고, 로컬에서는 짧은 코드를 `main.go`에 작성하고 `go run main.go`로 확인하는 것이 일반적이다.
 
