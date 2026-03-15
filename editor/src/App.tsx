@@ -64,7 +64,7 @@ function App() {
         setLoading(false);
       } catch (e) {
         console.error("Startup failed:", e);
-        setLoadingStatus(`Error: ${e}`);
+        setLoadingStatus(`Error: ${String(e)}`);
       }
     };
 

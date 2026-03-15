@@ -33,8 +33,14 @@ pub async fn ensure_repo_cloned(repo_path: String) -> Result<bool, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let path = Path::new(&repo_path);
         let git_dir = path.join(".git");
+        let content_dir = path.join("content");
 
-        if git_dir.exists() {
+        // If .git exists but content/ doesn't, previous clone was incomplete
+        if git_dir.exists() && !content_dir.exists() {
+            let _ = std::fs::remove_dir_all(path);
+        }
+
+        if git_dir.exists() && content_dir.exists() {
             return Ok(false);
         }
 

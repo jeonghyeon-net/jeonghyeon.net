@@ -1,12 +1,10 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::AppHandle;
-#[cfg(not(dev))]
-use tauri::Manager;
 
 use crate::util::extended_path;
 
-fn get_transformer_path(app: &AppHandle, project_path: &str) -> PathBuf {
+fn get_transformer_path(_app: &AppHandle, project_path: &str) -> PathBuf {
     // Dev mode: use the transformer from the repo
     #[cfg(dev)]
     {
@@ -14,13 +12,12 @@ fn get_transformer_path(app: &AppHandle, project_path: &str) -> PathBuf {
         return Path::new(project_path).join("transformer").join("transformer");
     }
 
-    // Production: use the bundled sidecar
+    // Production: sidecar is next to the executable in Contents/MacOS/
     #[cfg(not(dev))]
     {
         let _ = project_path;
-        let resource_dir = app.path().resource_dir()
-            .expect("Failed to get resource dir");
-        resource_dir.join("binaries").join("transformer")
+        let exe = std::env::current_exe().expect("Failed to get exe path");
+        exe.parent().expect("Failed to get exe dir").join("transformer")
     }
 }
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
-  "productName": "jeonghyeon.net Editor",
+  "productName": "jeonghyeon.net editor",
   "version": "0.1.0",
   "identifier": "net.jeonghyeon.editor",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "jeonghyeon.net Editor",
+        "title": "jeonghyeon.net editor",
         "maximized": true,
         "decorations": false,
         "width": 1200,
