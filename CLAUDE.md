@@ -10,7 +10,7 @@
 - frontmatter 금지 (파일 첫 줄이 `---`이면 안 됨)
 - 모든 `.md` 파일은 반드시 H1(`#`)으로 시작해야 함 (`_layout/` 파일은 예외)
 - 이미지는 `.webp`만 허용
-- 블로그 글은 반드시 `content/blog/글-이름/index.md` 구조
+- 블로그 글은 반드시 `content/posts/글-이름/index.md` 구조
 
 **마크다운만 쓴다.** 제목은 H1에서, 설명은 첫 번째 문단에서 자동 추출된다. 별도 설정 파일이나 메타데이터는 없다.
 
@@ -19,7 +19,7 @@
 ### 단독 블로그 글
 
 ```
-content/blog/글-slug/
+content/posts/글-slug/
   index.md       # 본문
   diagram.webp   # 이미지 (선택)
 ```
@@ -29,7 +29,7 @@ content/blog/글-slug/
 ### 시리즈 (연재물)
 
 ```
-content/blog/시리즈-slug/
+content/posts/시리즈-slug/
   01-첫번째/
     index.md
   02-두번째/
@@ -65,7 +65,7 @@ content/페이지-slug/
 - `make lint` — 정책 검증
 - `make build` — HTML 생성 + 최소화 → `dist/`
 - `make serve` — 빌드 + wrangler 로컬 서버 + 파일 변경 자동 재빌드
-- `make optimize` — 이미지 WebP 변환 + 리사이즈 (최대 800px)
+- `make optimize` — 이미지 WebP 변환 + 리사이즈 (최대 700px)
 - `make clean` — `dist/` 삭제
 - `make hooks` — git hooks 설치 (최초 1회)
 - main에 push하면 GitHub Actions가 Cloudflare Pages에 자동 배포
