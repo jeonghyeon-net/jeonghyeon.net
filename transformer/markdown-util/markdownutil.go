@@ -197,5 +197,6 @@ func MarkdownToHTML(source []byte) (string, error) {
 	if err := md.Convert(source, &buf); err != nil {
 		return "", err
 	}
-	return buf.String(), nil
+	html := strings.ReplaceAll(buf.String(), "<table>", `<table border="1" cellpadding="6" cellspacing="0">`)
+	return html, nil
 }
