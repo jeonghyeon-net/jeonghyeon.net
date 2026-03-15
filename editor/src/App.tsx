@@ -266,7 +266,7 @@ function App() {
   const handleDelete = useCallback(
     async (path: string) => {
       try {
-        await invoke("delete_path", { path });
+        await invoke("delete_path", { path, projectPath });
         // If deleted file was open, clear editor
         if (currentFile?.startsWith(path)) {
           setCurrentFile(null);
@@ -275,10 +275,10 @@ function App() {
           setViewingImage(null);
         }
       } catch (e) {
-        console.error("Failed to delete:", e);
+        alert("Failed to delete: " + e);
       }
     },
-    [currentFile]
+    [currentFile, projectPath]
   );
 
   if (loading) {

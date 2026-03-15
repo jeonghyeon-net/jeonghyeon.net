@@ -67,9 +67,18 @@ pub async fn write_file(path: String, content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn delete_path(path: String) -> Result<(), String> {
+pub async fn delete_path(path: String, project_path: String) -> Result<(), String> {
     if !is_safe_path(&path) {
         return Err("Invalid file path".to_string());
+    }
+    let content_dir = std::path::Path::new(&project_path).join("content");
+    let target = std::path::Path::new(&path);
+    if !target.starts_with(&content_dir) {
+        return Err("Cannot delete files outside content directory".to_string());
+    }
+    // Prevent deleting top-level content dirs
+    if target.parent() == Some(content_dir.as_path()) && target.is_dir() {
+        return Err("Cannot delete top-level content directories".to_string());
     }
     tauri::async_runtime::spawn_blocking(move || {
         let p = std::path::Path::new(&path);

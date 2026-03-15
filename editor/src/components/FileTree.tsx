@@ -229,6 +229,7 @@ export default function FileTree({
   const [tree, setTree] = useState<FileEntry[]>([]);
   const [inlineAction, setInlineAction] = useState<InlineAction | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuInfo | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<FileEntry | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const loadTree = useCallback(async () => {
@@ -345,9 +346,7 @@ export default function FileTree({
         danger: true,
         action: () => {
           setContextMenu(null);
-          if (confirm(`Delete "${entry.name}"?`)) {
-            onDelete(entry.path);
-          }
+          setDeleteConfirm(entry);
         },
       });
     }
@@ -390,6 +389,36 @@ export default function FileTree({
               </div>
             )
           )}
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="dialog-overlay">
+          <div className="dialog" style={{ minWidth: 280 }}>
+            <div className="dialog-titlebar">
+              <span className="dialog-title">Confirm Delete</span>
+            </div>
+            <div className="dialog-body">
+              <span className="dialog-label">Delete "{deleteConfirm.name}"?</span>
+            </div>
+            <div className="dialog-actions">
+              <button
+                className="dialog-btn confirm"
+                onClick={() => {
+                  onDelete(deleteConfirm.path);
+                  setDeleteConfirm(null);
+                }}
+              >
+                OK
+              </button>
+              <button
+                className="dialog-btn"
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -32,10 +32,11 @@ function Preview({ projectPath, filePath, triggerRender }: PreviewProps) {
             if (src.startsWith("http") || src.startsWith("asset:")) {
               return match;
             }
-            // Absolute paths (/) resolve from content dir
-            const absPath = src.startsWith("/")
-              ? `${contentDir}${src}`
-              : `${fileDir}/${src}`;
+            // Decode URL-encoded filenames (e.g., Korean characters, spaces)
+            const decodedSrc = decodeURIComponent(src);
+            const absPath = decodedSrc.startsWith("/")
+              ? `${contentDir}${decodedSrc}`
+              : `${fileDir}/${decodedSrc}`;
             return `src="${convertFileSrc(absPath)}"`;
           }
         );
