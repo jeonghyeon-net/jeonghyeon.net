@@ -35,7 +35,7 @@ jobs:
         continue-on-error: true
         run: |
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/jeonghyeon-net/deployments?per_page=100")
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/jeonghyeon-net/deployments")
           echo "$RESPONSE" | jq 'del(.result[].source, .result[].env_vars)' || echo "$RESPONSE"
           OLD_IDS=$(echo "$RESPONSE" | jq -r '(.result // [])[1:][].id')
           for id in $OLD_IDS; do
