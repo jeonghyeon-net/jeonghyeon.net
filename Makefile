@@ -43,7 +43,8 @@ optimize:
 clean:
 	rm -rf $(DIST_DIR)
 
-serve: build
+serve: clean $(TRANSFORMER)
+	@mkdir -p $(DIST_DIR)
 	@npx wrangler pages dev $(DIST_DIR) &
 	@$(TRANSFORMER) watch $(CONTENT_DIR) $(DIST_DIR)
 

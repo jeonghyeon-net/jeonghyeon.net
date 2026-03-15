@@ -134,12 +134,14 @@ func LintDir(contentDir string) []LintError {
 		ext := strings.ToLower(filepath.Ext(relPath))
 
 		// 6. image-not-webp: non-WebP images are forbidden
+		// Exception: favicon.ico at root
 		forbiddenExts := map[string]bool{
 			".png": true, ".jpg": true, ".jpeg": true,
 			".gif": true, ".bmp": true, ".tiff": true,
 			".svg": true, ".ico": true,
 		}
-		if forbiddenExts[ext] {
+		isFavicon := relPath == "favicon.ico"
+		if forbiddenExts[ext] && !isFavicon {
 			errs = append(errs, LintError{
 				File:    relPath,
 				Code:    "image-not-webp",

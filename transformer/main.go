@@ -240,6 +240,14 @@ func rebuild(contentDir, distDir string) {
 		fmt.Fprintln(os.Stderr, "minify error:", err)
 		return
 	}
+	// check
+	if violations := checkOutput(distDir); len(violations) > 0 {
+		for _, v := range violations {
+			fmt.Fprintln(os.Stderr, v)
+		}
+		fmt.Fprintf(os.Stderr, "%d violation(s) found\n", len(violations))
+		return
+	}
 	fmt.Println("done.")
 }
 
