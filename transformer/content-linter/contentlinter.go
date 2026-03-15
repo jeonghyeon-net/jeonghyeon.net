@@ -147,18 +147,27 @@ func LintDir(contentDir string) []LintError {
 			})
 		}
 
+		// 7. css-js-forbidden: .css and .js files are not allowed
+		if ext == ".css" || ext == ".js" {
+			errs = append(errs, LintError{
+				File:    relPath,
+				Code:    "css-js-forbidden",
+				Message: fmt.Sprintf("%s files are not allowed", ext),
+			})
+		}
+
 		// Only process .md files for the remaining checks
 		if ext != ".md" {
 			return nil
 		}
 
-		// 2. blog-loose-md: .md files directly under blog/ are forbidden
+		// 2. posts-loose-md: .md files directly under posts/ are forbidden
 		parts := strings.SplitN(relPath, string(filepath.Separator), 3)
-		if len(parts) == 2 && parts[0] == "blog" && filepath.Base(relPath) != "index.md" {
+		if len(parts) == 2 && parts[0] == "posts" && filepath.Base(relPath) != "index.md" {
 			errs = append(errs, LintError{
 				File:    relPath,
-				Code:    "blog-loose-md",
-				Message: fmt.Sprintf("markdown file %s must be inside a subfolder of blog/", relPath),
+				Code:    "posts-loose-md",
+				Message: fmt.Sprintf("markdown file %s must be inside a subfolder of posts/", relPath),
 			})
 		}
 

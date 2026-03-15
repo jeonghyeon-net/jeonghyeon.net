@@ -1,4 +1,4 @@
-# Hello, World
+# Hello, World !
 
 이 사이트는 CSS도 JavaScript도 없다. HTML만 있다. !!
 
@@ -11,7 +11,7 @@
 글은 마크다운으로 작성한다. frontmatter 같은 건 없다. 제목은 H1에서 추출되고, 설명은 첫 문단에서 자동으로 가져간다. 폴더 구조가 곧 URL이 된다.
 
 ```
-content/blog/hello-world/index.md → /blog/hello-world/
+content/posts/hello-world/index.md → /posts/hello-world/
 ```
 
 시리즈를 쓰고 싶으면 폴더 안에 번호 붙은 하위 폴더를 만든다. 그러면 자동으로 순서 목록이 생긴다.
@@ -22,4 +22,4 @@ Go로 만든 변환기가 마크다운을 HTML로 바꾼다. goldmark으로 pars
 
 복잡한 건 없다. 그게 핵심이다.
 
-![test5](./test5.webp)
+![test](./test.webp)

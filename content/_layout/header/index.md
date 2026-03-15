@@ -1,1 +1,3 @@
-[jeonghyeon.net](/) | [Blog](/blog/) | [Resume](/resume/) | [Playlist](/playlist/)
+[정현닷넷](/) | [글](/posts/) | [이력서](/resume/) | [플레이리스트](/playlists/)
+
+---

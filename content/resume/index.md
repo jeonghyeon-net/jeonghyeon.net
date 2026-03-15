@@ -1,4 +1,4 @@
-# Resume
+# 이력서
 
 ## jeonghyeon
 

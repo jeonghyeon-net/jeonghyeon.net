@@ -1,3 +1,4 @@
 # jeonghyeon
 
-Developer and musician.
+개발자이자 음악가.
+

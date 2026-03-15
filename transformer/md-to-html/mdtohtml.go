@@ -29,7 +29,7 @@ func escapeAttr(s string) string {
 // relPathToURL converts a relative markdown path to an absolute URL.
 // index.md -> siteURL + "/"
 // 404.md   -> siteURL + "/404.html"
-// blog/my-post/index.md -> siteURL + "/blog/my-post/"
+// posts/my-post/index.md -> siteURL + "/posts/my-post/"
 func relPathToURL(relPath, siteURL string) string {
 	slash := filepath.ToSlash(relPath)
 
@@ -45,22 +45,40 @@ func relPathToURL(relPath, siteURL string) string {
 }
 
 // pageTemplate builds a full HTML page.
-func pageTemplate(title, description, headerHTML, bodyHTML, footerHTML string) string {
-	return fmt.Sprintf(`<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="%s">
-  <title>%s</title>
-</head>
-<body>
-<header>%s</header>
-<main>%s</main>
-<footer>%s</footer>
-</body>
-</html>
-`, escapeAttr(description), escapeHTML(title), headerHTML, bodyHTML, footerHTML)
+func pageTemplate(cfg markdownutil.SiteConfig, title, description, pageURL, siteURL, imageURL, headerHTML, bodyHTML, footerHTML string) string {
+	var b strings.Builder
+	b.WriteString("<!DOCTYPE html>\n<html lang=\"" + escapeAttr(cfg.Lang) + "\">\n<head>\n")
+	b.WriteString("  <meta charset=\"utf-8\">\n")
+	b.WriteString("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
+	b.WriteString("  <meta name=\"color-scheme\" content=\"light dark\">\n")
+	b.WriteString("  <meta name=\"description\" content=\"" + escapeAttr(description) + "\">\n")
+	b.WriteString("  <meta name=\"author\" content=\"" + escapeAttr(cfg.Author) + "\">\n")
+	b.WriteString("  <meta property=\"og:title\" content=\"" + escapeAttr(title) + "\">\n")
+	b.WriteString("  <meta property=\"og:description\" content=\"" + escapeAttr(description) + "\">\n")
+	b.WriteString("  <meta property=\"og:url\" content=\"" + escapeAttr(pageURL) + "\">\n")
+	b.WriteString("  <meta property=\"og:type\" content=\"website\">\n")
+	b.WriteString("  <meta property=\"og:site_name\" content=\"" + escapeAttr(cfg.Name) + "\">\n")
+	if imageURL != "" {
+		b.WriteString("  <meta property=\"og:image\" content=\"" + escapeAttr(imageURL) + "\">\n")
+		b.WriteString("  <meta name=\"twitter:card\" content=\"summary_large_image\">\n")
+		b.WriteString("  <meta name=\"twitter:image\" content=\"" + escapeAttr(imageURL) + "\">\n")
+	} else {
+		b.WriteString("  <meta name=\"twitter:card\" content=\"summary\">\n")
+	}
+	b.WriteString("  <meta name=\"twitter:title\" content=\"" + escapeAttr(title) + "\">\n")
+	b.WriteString("  <meta name=\"twitter:description\" content=\"" + escapeAttr(description) + "\">\n")
+	b.WriteString("  <title>" + escapeHTML(title) + "</title>\n")
+	b.WriteString("  <link rel=\"canonical\" href=\"" + escapeAttr(pageURL) + "\">\n")
+	b.WriteString("  <link rel=\"alternate\" type=\"application/rss+xml\" title=\"" + escapeAttr(cfg.Name) + "\" href=\"" + escapeAttr(siteURL) + "/feed.xml\">\n")
+	b.WriteString("  <link rel=\"icon\" href=\"/favicon.ico\">\n")
+	b.WriteString("</head>\n<body>\n")
+	b.WriteString("<font face=\"" + escapeAttr(cfg.Font) + "\">\n")
+	b.WriteString("<table align=\"center\" width=\"" + cfg.Width + "\"><tr><td>\n")
+	b.WriteString("<header>" + headerHTML + "</header>\n")
+	b.WriteString("<main>" + bodyHTML + "</main>\n")
+	b.WriteString("<footer>" + footerHTML + "</footer>\n")
+	b.WriteString("</td></tr></table>\n</font>\n</body>\n</html>\n")
+	return b.String()
 }
 
 // copyFile copies src to dst, creating any necessary parent directories.
@@ -88,12 +106,15 @@ type pageInfo struct {
 	title       string
 	description string
 	url         string
-	isBlog      bool
+	isPost      bool
 	is404       bool
 }
 
 // Render converts contentDir into distDir with HTML pages, sitemap, feed, and llms.txt.
-func Render(contentDir, distDir, siteURL string) error {
+func Render(contentDir, distDir string) error {
+	cfg := markdownutil.LoadConfig(contentDir)
+	siteURL := cfg.URL
+
 	// Read layout files
 	headerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "header", "index.md"))
 	if err != nil {
@@ -157,13 +178,25 @@ func Render(contentDir, distDir, siteURL string) error {
 
 			title := markdownutil.ExtractH1(src)
 			description := markdownutil.ExtractFirstParagraph(src)
+			firstImage := markdownutil.ExtractFirstImage(src)
 
 			bodyHTML, err := markdownutil.MarkdownToHTML(src)
 			if err != nil {
 				return fmt.Errorf("convert %s: %w", relPath, err)
 			}
 
-			html := pageTemplate(title, description, headerHTML, bodyHTML, footerHTML)
+			pageURL := relPathToURL(slashRel, siteURL)
+
+			// Resolve relative image path to absolute URL for og:image
+			imageURL := ""
+			if firstImage != "" && !strings.HasPrefix(firstImage, "http") {
+				dir := filepath.Dir(slashRel)
+				imageURL = siteURL + "/" + filepath.ToSlash(filepath.Join(dir, firstImage))
+			} else {
+				imageURL = firstImage
+			}
+
+			html := pageTemplate(cfg, title, description, pageURL, siteURL, imageURL, headerHTML, bodyHTML, footerHTML)
 
 			// Determine output .html path
 			htmlDestPath := strings.TrimSuffix(destPath, ".md") + ".html"
@@ -180,18 +213,17 @@ func Render(contentDir, distDir, siteURL string) error {
 			}
 
 			// Collect page info for sitemap/feed/llms
-			url := relPathToURL(slashRel, siteURL)
 			is404 := slashRel == "404.md"
-			// Blog post = under blog/ but not blog/index.md itself (which is a listing page)
-			isBlogPost := strings.HasPrefix(slashRel, "blog/") && slashRel != "blog/index.md"
+			// Blog post = under posts/ but not posts/index.md itself (which is a listing page)
+			isPost := strings.HasPrefix(slashRel, "posts/") && slashRel != "posts/index.md"
 			// Check if this is a leaf post (has no subdirectories with index.md = not a series listing)
-			if isBlogPost {
+			if isPost {
 				dir := filepath.Dir(filepath.Join(contentDir, slashRel))
 				entries, _ := os.ReadDir(dir)
 				for _, e := range entries {
 					if e.IsDir() {
 						// This folder has subdirectories → it's a series/category listing, not a post
-						isBlogPost = false
+						isPost = false
 						break
 					}
 				}
@@ -200,8 +232,8 @@ func Render(contentDir, distDir, siteURL string) error {
 			pages = append(pages, pageInfo{
 				title:       title,
 				description: description,
-				url:         url,
-				isBlog:      isBlogPost,
+				url:         pageURL,
+				isPost:      isPost,
 				is404:       is404,
 			})
 		} else {
@@ -228,12 +260,12 @@ func Render(contentDir, distDir, siteURL string) error {
 	}
 
 	// Generate feed.xml
-	if err := writeFeed(distDir, siteURL, pages); err != nil {
+	if err := writeFeed(distDir, siteURL, cfg, pages); err != nil {
 		return err
 	}
 
 	// Generate llms.txt
-	if err := writeLLMs(distDir, pages); err != nil {
+	if err := writeLLMs(distDir, cfg, pages); err != nil {
 		return err
 	}
 
@@ -259,17 +291,17 @@ func writeSitemap(distDir string, pages []pageInfo) error {
 	return os.WriteFile(filepath.Join(distDir, "sitemap.xml"), []byte(sb.String()), 0644)
 }
 
-func writeFeed(distDir, siteURL string, pages []pageInfo) error {
+func writeFeed(distDir, siteURL string, cfg markdownutil.SiteConfig, pages []pageInfo) error {
 	var sb strings.Builder
 	sb.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	sb.WriteString(`<rss version="2.0">` + "\n")
 	sb.WriteString("<channel>\n")
-	sb.WriteString(fmt.Sprintf("  <title>%s</title>\n", escapeHTML("jeonghyeon.net")))
+	sb.WriteString(fmt.Sprintf("  <title>%s</title>\n", escapeHTML(cfg.Name)))
 	sb.WriteString(fmt.Sprintf("  <link>%s</link>\n", escapeHTML(siteURL+"/")))
-	sb.WriteString("  <description>Personal website — developer and musician</description>\n")
+	sb.WriteString(fmt.Sprintf("  <description>%s</description>\n", escapeHTML(cfg.Description)))
 
 	for _, p := range pages {
-		if !p.isBlog {
+		if !p.isPost {
 			continue
 		}
 		sb.WriteString("  <item>\n")
@@ -286,17 +318,21 @@ func writeFeed(distDir, siteURL string, pages []pageInfo) error {
 	return os.WriteFile(filepath.Join(distDir, "feed.xml"), []byte(sb.String()), 0644)
 }
 
-func writeLLMs(distDir string, pages []pageInfo) error {
+func writeLLMs(distDir string, cfg markdownutil.SiteConfig, pages []pageInfo) error {
 	var sb strings.Builder
-	sb.WriteString("# jeonghyeon.net\n")
-	sb.WriteString("> Personal website — developer and musician\n")
-	sb.WriteString("## Pages\n")
+	sb.WriteString("# " + cfg.Name + "\n")
+	sb.WriteString("> " + cfg.Description + "\n")
+	sb.WriteString("## 페이지\n")
 
 	for _, p := range pages {
 		if p.is404 {
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("- [%s](%s): %s\n", p.title, p.url, p.description))
+		if p.description != "" {
+			sb.WriteString(fmt.Sprintf("- [%s](%s): %s\n", p.title, p.url, p.description))
+		} else {
+			sb.WriteString(fmt.Sprintf("- [%s](%s)\n", p.title, p.url))
+		}
 	}
 
 	return os.WriteFile(filepath.Join(distDir, "llms.txt"), []byte(sb.String()), 0644)

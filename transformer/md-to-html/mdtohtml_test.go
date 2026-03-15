@@ -10,7 +10,7 @@ import (
 func runRender(t *testing.T) string {
 	t.Helper()
 	distDir := t.TempDir()
-	err := Render("testdata/basic", distDir, "https://jeonghyeon.net")
+	err := Render("testdata/basic", distDir)
 	if err != nil {
 		t.Fatalf("Render error: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestRender_LLMsTxt(t *testing.T) {
 	}
 
 	content := readFile(t, path)
-	if !strings.Contains(content, "jeonghyeon.net") {
-		t.Errorf("llms.txt missing 'jeonghyeon.net', got:\n%s", content)
+	if !strings.Contains(content, "test") {
+		t.Errorf("llms.txt missing site name, got:\n%s", content)
 	}
 }

@@ -14,7 +14,7 @@ import (
 // Non-.html files (including .md files) are not touched.
 func MinifyDir(dir string) error {
 	m := minify.New()
-	m.AddFunc("text/html", html.Minify)
+	m.Add("text/html", &html.Minifier{KeepDefaultAttrVals: true})
 	m.AddFunc("text/css", css.Minify)
 	m.AddFunc("application/javascript", js.Minify)
 

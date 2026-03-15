@@ -87,8 +87,8 @@ func TestLintFile_UnclosedCodeFence(t *testing.T) {
 func TestLintDir_BlogLooseMdForbidden(t *testing.T) {
 	dir := testdataPath("bad-structure")
 	errs := contentlinter.LintDir(dir)
-	if !hasCode(errs, "blog-loose-md") {
-		t.Errorf("expected blog-loose-md error, got: %v", errs)
+	if !hasCode(errs, "posts-loose-md") {
+		t.Errorf("expected posts-loose-md error, got: %v", errs)
 	}
 }
 

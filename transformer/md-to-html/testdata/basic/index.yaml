@@ -1,0 +1,8 @@
+site:
+  name: test
+  url: https://test.example.com
+  author: tester
+  description: test site
+  lang: ko
+  font: monospace
+  width: 700

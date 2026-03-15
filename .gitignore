@@ -2,6 +2,7 @@
 dist/
 transformer/transformer
 .last-build
+.wrangler
 
 # docs
 docs/

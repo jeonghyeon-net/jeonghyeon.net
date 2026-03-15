@@ -1,7 +1,6 @@
 TRANSFORMER = ./transformer/transformer
 CONTENT_DIR = content
 DIST_DIR = dist
-SITE_URL = https://jeonghyeon.net
 
 .PHONY: lint build optimize clean hooks serve
 
@@ -12,10 +11,11 @@ lint: $(TRANSFORMER)
 	$(TRANSFORMER) lint $(CONTENT_DIR)
 
 build: clean $(TRANSFORMER)
-	$(TRANSFORMER) render $(CONTENT_DIR) $(DIST_DIR) $(SITE_URL)
+	$(TRANSFORMER) render $(CONTENT_DIR) $(DIST_DIR)
 	$(TRANSFORMER) minify $(DIST_DIR)
+	$(TRANSFORMER) check $(DIST_DIR)
 
-MAX_DIM = 800
+MAX_DIM = 700
 
 optimize:
 	@command -v cwebp >/dev/null 2>&1 || { echo "cwebp not found. Install libwebp."; exit 1; }
@@ -30,7 +30,7 @@ optimize:
 			resize="-resize 0 $(MAX_DIM)"; \
 		fi; \
 		echo "converting $$img ($${w}x$${h}) -> $$webp (max $(MAX_DIM)px)"; \
-		cwebp -q 90 $$resize "$$img" -o "$$webp"; \
+		cwebp -q 80 $$resize "$$img" -o "$$webp"; \
 		old_basename=$$(basename "$$img"); \
 		new_basename=$$(basename "$$webp"); \
 		grep -rl "$$old_basename" $(CONTENT_DIR) --include="*.md" | xargs sed -i.bak "s/$$old_basename/$$new_basename/g"; \
@@ -44,7 +44,7 @@ clean:
 
 serve: build
 	@npx wrangler pages dev $(DIST_DIR) &
-	@$(TRANSFORMER) watch $(CONTENT_DIR) $(DIST_DIR) $(SITE_URL)
+	@$(TRANSFORMER) watch $(CONTENT_DIR) $(DIST_DIR)
 
 hooks:
 	git config core.hooksPath hooks

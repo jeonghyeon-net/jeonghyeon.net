@@ -56,8 +56,11 @@ func isSeries(subDirs []string) bool {
 }
 
 // generateMarkdown produces the markdown content for an auto-generated index.
-func generateMarkdown(folderPath, folderName string, subDirs []string) string {
-	title := titleFromDirName(folderName)
+func generateMarkdown(folderPath, folderName string, subDirs []string, cfg markdownutil.SiteConfig) string {
+	title := cfg.Titles[folderName]
+	if title == "" {
+		title = titleFromDirName(folderName)
+	}
 	series := isSeries(subDirs)
 
 	// Sort: alphabetically for regular, numerically (alphabetically on prefixed names) for series.
@@ -84,6 +87,7 @@ func generateMarkdown(folderPath, folderName string, subDirs []string) string {
 // for every folder that is missing an index.md and has at least one subdirectory.
 // Skips the root dir (".") and "_layout/".
 func Generate(contentDir string) (map[string]string, error) {
+	cfg := markdownutil.LoadConfig(contentDir)
 	result := make(map[string]string)
 
 	err := filepath.WalkDir(contentDir, func(absPath string, d os.DirEntry, walkErr error) error {
@@ -135,7 +139,7 @@ func Generate(contentDir string) (map[string]string, error) {
 		}
 
 		folderName := filepath.Base(absPath)
-		content := generateMarkdown(absPath, folderName, subDirs)
+		content := generateMarkdown(absPath, folderName, subDirs, cfg)
 
 		key := filepath.ToSlash(filepath.Join(relPath, "index.md"))
 		result[key] = content
