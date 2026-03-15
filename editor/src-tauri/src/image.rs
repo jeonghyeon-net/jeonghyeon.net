@@ -14,6 +14,17 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
             .ok_or_else(|| "Invalid source path".to_string())?;
         let copied = dest.join(file_name);
 
+        // If already .webp, just copy to destination without conversion
+        let src_ext = src
+            .extension()
+            .map(|e| e.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+        if src_ext == "webp" {
+            std::fs::copy(src, &copied)
+                .map_err(|e| format!("Failed to copy file: {}", e))?;
+            return Ok(file_name.to_string_lossy().to_string());
+        }
+
         // 1. Copy source to dest_dir
         std::fs::copy(src, &copied)
             .map_err(|e| format!("Failed to copy file: {}", e))?;

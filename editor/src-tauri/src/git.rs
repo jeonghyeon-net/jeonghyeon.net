@@ -1,15 +1,9 @@
 use std::path::Path;
 use std::process::Command;
 
-const REPO_URL: &str = "git@github.com:jeonghyeon-net/jeonghyeon.net.git";
+use crate::util::extended_path;
 
-fn extended_path() -> String {
-    let current_path = std::env::var("PATH").unwrap_or_default();
-    format!(
-        "/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin:{}",
-        current_path
-    )
-}
+const REPO_URL: &str = "git@github.com:jeonghyeon-net/jeonghyeon.net.git";
 
 #[tauri::command]
 pub async fn get_repo_path() -> Result<String, String> {

@@ -51,7 +51,7 @@ function Preview({ projectPath, filePath, triggerRender }: PreviewProps) {
             "<style>html,body{overscroll-behavior:none;color-scheme:light}</style></head>"
           );
         setHtml(withInjections);
-        lastHtmlRef.current = processedHtml;
+        lastHtmlRef.current = withInjections;
         setError(null);
       } catch (e) {
         setError(String(e));

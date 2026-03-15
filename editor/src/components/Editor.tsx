@@ -14,6 +14,7 @@ interface EditorProps {
   onSave: () => void;
   insertText: string | null;
   onImageDrop?: (paths: string[]) => void;
+  viewRef?: React.MutableRefObject<EditorView | null>;
 }
 
 const win98Theme = EditorView.theme({
@@ -69,6 +70,7 @@ function Editor({
   onSave,
   insertText,
   onImageDrop,
+  viewRef: externalViewRef,
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -117,10 +119,12 @@ function Editor({
     });
 
     viewRef.current = view;
+    if (externalViewRef) externalViewRef.current = view;
 
     return () => {
       view.destroy();
       viewRef.current = null;
+      if (externalViewRef) externalViewRef.current = null;
     };
     // Only re-create when filePath changes — content is the initial value
     // eslint-disable-next-line react-hooks/exhaustive-deps

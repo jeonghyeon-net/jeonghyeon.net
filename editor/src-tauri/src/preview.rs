@@ -4,13 +4,7 @@ use tauri::AppHandle;
 #[cfg(not(dev))]
 use tauri::Manager;
 
-fn extended_path() -> String {
-    let current_path = std::env::var("PATH").unwrap_or_default();
-    format!(
-        "/opt/homebrew/bin:/usr/local/bin:/usr/local/go/bin:{}",
-        current_path
-    )
-}
+use crate::util::extended_path;
 
 fn get_transformer_path(app: &AppHandle, project_path: &str) -> PathBuf {
     // Dev mode: use the transformer from the repo

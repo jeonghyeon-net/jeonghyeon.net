@@ -3,6 +3,7 @@ mod git;
 mod image;
 mod preview;
 mod pty;
+mod util;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -10,6 +11,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(pty::PtyState::default())
+        .manage(files::WatcherState(std::sync::Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             pty::create_pty_session,
             pty::write_to_pty,

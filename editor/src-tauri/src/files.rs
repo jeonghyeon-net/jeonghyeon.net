@@ -1,6 +1,10 @@
 use notify::{EventKind, RecursiveMode, Watcher};
 use std::path::Path;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
+
+use crate::util::is_safe_path;
+
+pub struct WatcherState(pub std::sync::Mutex<Option<notify::RecommendedWatcher>>);
 
 #[derive(serde::Serialize, Clone)]
 pub struct FileEntry {
@@ -35,6 +39,9 @@ fn build_tree(dir: &Path) -> std::io::Result<Vec<FileEntry>> {
 
 #[tauri::command]
 pub async fn read_file(path: String) -> Result<String, String> {
+    if !is_safe_path(&path) {
+        return Err("Invalid file path".to_string());
+    }
     tauri::async_runtime::spawn_blocking(move || {
         std::fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))
     })
@@ -44,6 +51,9 @@ pub async fn read_file(path: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn write_file(path: String, content: String) -> Result<(), String> {
+    if !is_safe_path(&path) {
+        return Err("Invalid file path".to_string());
+    }
     tauri::async_runtime::spawn_blocking(move || {
         let p = Path::new(&path);
         if let Some(parent) = p.parent() {
@@ -58,6 +68,9 @@ pub async fn write_file(path: String, content: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
+    if !is_safe_path(&old_path) || !is_safe_path(&new_path) {
+        return Err("Invalid file path".to_string());
+    }
     tauri::async_runtime::spawn_blocking(move || {
         std::fs::rename(&old_path, &new_path)
             .map_err(|e| format!("Failed to rename: {}", e))
@@ -84,30 +97,28 @@ pub async fn watch_content_dir(app: AppHandle, project_path: String) -> Result<(
     }
 
     let content_path = content_dir.to_path_buf();
-    std::thread::spawn(move || {
-        let app_clone = app.clone();
-        let mut watcher =
-            notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
-                if let Ok(event) = res {
-                    match event.kind {
-                        EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_) => {
-                            let _ = app_clone.emit("content-changed", &event.paths);
-                        }
-                        _ => {}
+    let app_clone = app.clone();
+    let mut watcher =
+        notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
+            if let Ok(event) = res {
+                match event.kind {
+                    EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_) => {
+                        let _ = app_clone.emit("content-changed", &event.paths);
                     }
+                    _ => {}
                 }
-            })
-            .expect("Failed to create file watcher");
+            }
+        })
+        .map_err(|e| format!("Failed to create file watcher: {}", e))?;
 
-        watcher
-            .watch(&content_path, RecursiveMode::Recursive)
-            .expect("Failed to watch content directory");
+    watcher
+        .watch(&content_path, RecursiveMode::Recursive)
+        .map_err(|e| format!("Failed to watch content directory: {}", e))?;
 
-        // Keep the thread (and watcher) alive
-        loop {
-            std::thread::sleep(std::time::Duration::from_secs(3600));
-        }
-    });
+    // Store the watcher in managed state so it stays alive and can be replaced
+    let state = app.state::<WatcherState>();
+    let mut guard = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+    *guard = Some(watcher);
 
     Ok(())
 }

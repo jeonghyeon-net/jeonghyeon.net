@@ -15,7 +15,6 @@ function App() {
   const [content, setContent] = useState<string>("");
   const [isDirty, setIsDirty] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [insertText, setInsertText] = useState<string | null>(null);
   const [renderTrigger, setRenderTrigger] = useState(0);
   const [terminalVisible, setTerminalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,6 +24,13 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const [terminalHeight, setTerminalHeight] = useState(260);
   const mainRef = useRef<HTMLDivElement>(null);
+
+  // Refs for save/reload coordination
+  const lastSaveTimeRef = useRef(0);
+  const currentFileRef = useRef(currentFile);
+  currentFileRef.current = currentFile;
+  const isDirtyRef = useRef(isDirty);
+  isDirtyRef.current = isDirty;
 
   // Startup flow
   useEffect(() => {
@@ -65,14 +71,17 @@ function App() {
     startup();
   }, []);
 
-  // Save handler
+  // Save handler - use ref to avoid re-registering keydown on every content change
+  const contentForSaveRef = useRef(content);
+  contentForSaveRef.current = content;
+
   const handleSave = useCallback(async () => {
     if (!currentFile) return;
     lastSaveTimeRef.current = Date.now();
-    await invoke("write_file", { path: currentFile, content });
+    await invoke("write_file", { path: currentFile, content: contentForSaveRef.current });
     setIsDirty(false);
     setRenderTrigger((prev) => prev + 1);
-  }, [currentFile, content]);
+  }, [currentFile]);
 
   // Autosave (1 second debounce)
   useEffect(() => {
@@ -107,13 +116,6 @@ function App() {
   const [activeTerminalCwd, setActiveTerminalCwd] = useState<string | null>(null);
 
   // Reload current file when changed externally
-  const currentFileRef = useRef(currentFile);
-  currentFileRef.current = currentFile;
-  const lastSaveTimeRef = useRef(0);
-
-  const isDirtyRef = useRef(isDirty);
-  isDirtyRef.current = isDirty;
-
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     listen<string[]>("content-changed", async (event) => {
@@ -123,7 +125,7 @@ function App() {
       const changedPaths = event.payload;
       if (!changedPaths?.some((p) => p === file)) return;
       // Skip if we just saved (avoid reloading our own writes)
-      if (Date.now() - lastSaveTimeRef.current < 1000) return;
+      if (Date.now() - lastSaveTimeRef.current < 500) return;
       try {
         const newContent = await invoke<string>("read_file", { path: file });
         setContent(newContent);
@@ -168,27 +170,59 @@ function App() {
     }
   }, []);
 
-  // Image drop handler
+  // Editor view ref for direct access
+  const editorViewRef = useRef<import("@codemirror/view").EditorView | null>(null);
+
+  // Image drop handler — GitHub style: insert placeholder, then replace
   const handleImageDrop = useCallback(
     async (paths: string[]) => {
       if (!currentFile) return;
       const destDir = currentFile.substring(0, currentFile.lastIndexOf("/"));
-      const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff"];
+      const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".webp"];
 
       for (const sourcePath of paths) {
         const ext = sourcePath.substring(sourcePath.lastIndexOf(".")).toLowerCase();
         if (!imageExts.includes(ext)) continue;
+
+        const fileName = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
+        const placeholder = `![Uploading ${fileName}...]()`;
+        const view = editorViewRef.current;
+        if (!view) continue;
+
+        // Insert placeholder at cursor
+        const cursor = view.state.selection.main.head;
+        view.dispatch({
+          changes: { from: cursor, insert: placeholder + "\n" },
+          selection: { anchor: cursor + placeholder.length + 1 },
+        });
 
         try {
           const webpFilename = await invoke<string>("optimize_image", {
             sourcePath,
             destDir,
           });
-          setInsertText(`![](${webpFilename})\n`);
-          await new Promise((r) => setTimeout(r, 0));
-          setInsertText(null);
+
+          // Replace placeholder with actual image tag
+          const doc = view.state.doc.toString();
+          const pos = doc.indexOf(placeholder);
+          if (pos !== -1) {
+            view.dispatch({
+              changes: { from: pos, to: pos + placeholder.length, insert: `![](${webpFilename})` },
+            });
+          }
+          setContent(view.state.doc.toString());
+          setIsDirty(true);
         } catch (e) {
           console.error("Failed to optimize image:", e);
+          // Remove placeholder on failure
+          const doc = view.state.doc.toString();
+          const pos = doc.indexOf(placeholder);
+          if (pos !== -1) {
+            view.dispatch({
+              changes: { from: pos, to: pos + placeholder.length + 1, insert: "" },
+            });
+            setContent(view.state.doc.toString());
+          }
         }
       }
     },
@@ -308,8 +342,9 @@ function App() {
                     setIsDirty(true);
                   }}
                   onSave={handleSave}
-                  insertText={insertText}
+                  insertText={null}
                   onImageDrop={handleImageDrop}
+                  viewRef={editorViewRef}
                 />
               </div>
               <div className="pane-divider" />
@@ -335,8 +370,9 @@ function App() {
                   setIsDirty(true);
                 }}
                 onSave={handleSave}
-                insertText={insertText}
+                insertText={null}
                 onImageDrop={handleImageDrop}
+                viewRef={editorViewRef}
               />
             </div>
           )}
