@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	autoindex "github.com/jeonghyeon-net/jeonghyeon.net/transformer/auto-index"
 	contentlinter "github.com/jeonghyeon-net/jeonghyeon.net/transformer/content-linter"
+	mdtohtml "github.com/jeonghyeon-net/jeonghyeon.net/transformer/md-to-html"
 )
 
 func main() {
@@ -16,6 +18,8 @@ func main() {
 
 	cmd := os.Args[1]
 	args := os.Args[2:]
+
+	var err error
 
 	switch cmd {
 	case "lint":
@@ -38,14 +42,29 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Usage: transformer index <content-dir>")
 			os.Exit(1)
 		}
-		fmt.Printf("index: content-dir=%s\n", args[0])
+		generated, genErr := autoindex.Generate(args[0])
+		if genErr != nil {
+			err = genErr
+			break
+		}
+		created, writeErr := autoindex.WriteGenerated(args[0], generated)
+		if writeErr != nil {
+			err = writeErr
+			break
+		}
+		for _, p := range created {
+			fmt.Println(p)
+		}
 
 	case "render":
 		if len(args) != 3 {
 			fmt.Fprintln(os.Stderr, "Usage: transformer render <content-dir> <dist-dir> <site-url>")
 			os.Exit(1)
 		}
-		fmt.Printf("render: content-dir=%s dist-dir=%s site-url=%s\n", args[0], args[1], args[2])
+		err = mdtohtml.Render(args[0], args[1], args[2])
+		if err == nil {
+			fmt.Println("render complete:", args[1])
+		}
 
 	case "minify":
 		if len(args) != 1 {
@@ -64,6 +83,11 @@ func main() {
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
 		fmt.Fprintln(os.Stderr, "Commands: lint, index, render, minify, build")
+		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
