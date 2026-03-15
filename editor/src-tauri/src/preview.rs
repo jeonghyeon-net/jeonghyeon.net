@@ -8,7 +8,7 @@ fn get_transformer_path(_app: &AppHandle, project_path: &str) -> PathBuf {
     // Dev mode: use the transformer from the repo
     #[cfg(dev)]
     {
-        let _ = app;
+        let _ = _app;
         return Path::new(project_path).join("transformer").join("transformer");
     }
 

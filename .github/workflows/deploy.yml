@@ -28,3 +28,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=jeonghyeon-net
+
+      - name: Delete old deployments
+        continue-on-error: true
+        run: |
+          OLD_IDS=$(curl -s -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/jeonghyeon-net/deployments?per_page=100" \
+            | jq -r '.result[1:][].id')
+          for id in $OLD_IDS; do
+            curl -s -X DELETE -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/jeonghyeon-net/deployments/$id?force=true" > /dev/null
+          done

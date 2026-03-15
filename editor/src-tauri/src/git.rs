@@ -37,7 +37,8 @@ pub async fn ensure_repo_cloned(repo_path: String) -> Result<bool, String> {
 
         // If .git exists but content/ doesn't, previous clone was incomplete
         if git_dir.exists() && !content_dir.exists() {
-            let _ = std::fs::remove_dir_all(path);
+            std::fs::remove_dir_all(path)
+                .map_err(|e| format!("Failed to clean up incomplete clone: {}", e))?;
         }
 
         if git_dir.exists() && content_dir.exists() {
