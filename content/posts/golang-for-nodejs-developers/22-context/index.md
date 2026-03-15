@@ -366,18 +366,4 @@ ctx := context.TODO()
 
 HTTP 핸들러에서는 `r.Context()`가 루트 역할을 하므로 `Background()`를 직접 쓸 일이 드물다. `Background()`는 서버 시작 시점의 초기화나 테스트 코드에서 주로 사용한다.
 
-## 정리
-
-context는 Go의 동시성 모델과 맞물려 동작하는 도구다. goroutine이 쉽게 생성되는 만큼, 그것들의 수명도 체계적으로 관리되어야 한다. HTTP 요청 하나가 여러 goroutine을 생성하고, 각 goroutine이 DB, 캐시, 외부 API를 호출하는 상황에서 context 없이는 정리(cleanup)가 불가능하다.
-
-| 함수 | 용도 |
-|---|---|
-| `context.Background()` | 루트 context |
-| `context.TODO()` | 미결정 context (임시) |
-| `context.WithCancel` | 수동 취소 |
-| `context.WithTimeout` | 시간 제한 (상대) |
-| `context.WithDeadline` | 시간 제한 (절대) |
-| `context.WithValue` | 요청 범위 값 전달 |
-| `context.AfterFunc` | 취소 시 콜백 등록 |
-
-Node.js에서 Go로 넘어올 때, context를 모든 함수의 첫 번째 인자로 전달하는 것이 처음에는 번거롭게 느껴진다. 하지만 이것이 Go가 수천 개의 동시 요청을 안전하게 처리하는 기반이다. 명시적인 전파는 코드의 취소 경로를 추적 가능하게 만들고, 리소스 누수를 방지한다.
+context를 모든 함수의 첫 번째 인자로 전달하는 것이 처음에는 번거롭게 느껴진다. 하지만 명시적 전파는 코드의 취소 경로를 추적 가능하게 만들고, 리소스 누수를 방지한다.

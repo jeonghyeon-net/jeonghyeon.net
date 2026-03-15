@@ -440,17 +440,4 @@ func main() {
 
 실제 프로덕션에서는 직접 Handler를 작성하기보다 기존 Handler를 래핑하는 방식이 더 일반적이다. 기본 JSONHandler로 충분하고, 출력 대상만 바꾸면 되는 경우가 대부분이다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 기본 로깅 | `console.log` | `log.Println` |
-| 구조화 로깅 | pino, winston (서드파티) | `log/slog` (표준) |
-| JSON 출력 | pino 기본 출력 | `slog.NewJSONHandler` |
-| 텍스트 출력 | `pino-pretty` | `slog.NewTextHandler` |
-| 로그 레벨 | `logger.level = "debug"` | `slog.HandlerOptions{Level: ...}` |
-| child logger | `logger.child({key: val})` | `logger.With("key", val)` |
-| 요청별 로거 | `req.log` | context에 로거 저장 |
-| 커스텀 포맷 | custom transport | `slog.Handler` interface 구현 |
-
-Node.js에서 Go로 넘어올 때 가장 큰 차이는 구조화 로깅이 표준이라는 점이다. pino나 winston을 고르고, 설정을 맞추고, transport를 구성하는 과정이 Go에서는 `slog.NewJSONHandler` 한 줄로 끝난다. 서드파티 의존성 없이 프로덕션 수준의 구조화 로깅을 시작할 수 있다.
+`log/slog`는 pino나 winston을 고르고, 설정을 맞추고, transport를 구성하는 과정을 `slog.NewJSONHandler` 한 줄로 대체한다. 서드파티 의존성 없이 프로덕션 수준의 구조화 로깅을 바로 시작할 수 있다.

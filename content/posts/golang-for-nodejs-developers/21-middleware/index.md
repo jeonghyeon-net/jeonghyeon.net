@@ -72,7 +72,7 @@ first: 응답 완료
 
 함수 호출이 중첩되므로 요청은 바깥에서 안으로, 응답은 안에서 바깥으로 흐른다. `first`가 `second`를 감싸고, `second`가 실제 핸들러를 감싼다. 이 구조는 Express의 미들웨어 스택과 결과는 같지만, Express는 `next()` callback을 통한 순차 실행이고 Go는 함수 호출의 중첩이다.
 
-20편에서 소개한 `chain` 함수를 쓰면 읽기 순서와 실행 순서가 일치한다:
+`chain` 함수를 만들면 읽기 순서와 실행 순서가 일치한다:
 
 ```go
 func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
@@ -106,7 +106,7 @@ func (r *statusRecorder) WriteHeader(code int) {
 
 ## 로깅 미들웨어
 
-20편의 로깅 미들웨어는 요청 정보만 기록했다. 실용적인 로깅은 응답 상태 코드와 처리 시간도 필요하다:
+실용적인 로깅 미들웨어는 응답 상태 코드와 처리 시간도 기록해야 한다:
 
 ```go
 func logging(next http.Handler) http.Handler {
@@ -287,7 +287,7 @@ Go에서 라우트별 미들웨어가 `mux.Handle`을 사용하는 것에 주의
 클라이언트 응답
 ```
 
-이 흐름은 함수 call stack 그 자체다. 미들웨어마다 `next.ServeHTTP` 호출 전에 요청 전처리를, 호출 후에 응답 후처리를 수행한다. Express의 미들웨어도 결과적으로 같은 흐름이지만, callback chain이라는 간접 계층이 하나 더 있다.
+이 흐름은 함수 call stack 그 자체다. 미들웨어마다 `next.ServeHTTP` 호출 전에 요청 전처리를, 호출 후에 응답 후처리를 수행한다.
 
 ## 서드파티 미들웨어와의 호환
 

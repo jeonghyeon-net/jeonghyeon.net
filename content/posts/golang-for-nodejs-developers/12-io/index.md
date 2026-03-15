@@ -487,21 +487,4 @@ func main() {
 
 Reader를 감싸서 Reader를 반환하고, Writer를 감싸서 Writer를 반환한다. 이 패턴이 decorator처럼 겹겹이 쌓인다. 암호화, 압축, 버퍼링, 로깅 등을 각각 독립적으로 구현하고, `io.Copy` 하나로 연결한다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 핵심 추상화 | Stream (Readable, Writable, Duplex, Transform) | `io.Reader`, `io.Writer` |
-| 데이터 흐름 | push 기반 (이벤트) | pull 기반 (블로킹 호출) |
-| backpressure | `drain` 이벤트, `pause`/`resume` | 블로킹 호출로 자동 해결 |
-| 스트림 연결 | `pipe`, `pipeline` | `io.Copy`, Writer/Reader wrapping |
-| 변환 | Transform 스트림 | Reader/Writer를 감싸는 패턴 |
-| 버퍼링 | Stream 내장 버퍼 | `bufio` 패키지 |
-| 파일 전체 읽기 | `fs.readFile` | `os.ReadFile` |
-| 줄 단위 읽기 | `readline` 모듈 | `bufio.Scanner` |
-| 테스트용 소스 | 커스텀 Readable 구현 | `strings.NewReader` |
-| 테스트용 싱크 | 배열에 push | `bytes.Buffer` |
-
-Node.js의 Stream은 기능이 풍부하다. 네 가지 타입, 이벤트 시스템, 자동 backpressure(`pipeline`), object mode 등 다양한 기능을 제공한다. 반면 학습 곡선이 가파르고, `data`/`end`/`error`/`drain`/`close`/`finish` 등 이벤트 조합을 정확히 이해해야 올바르게 사용할 수 있다.
-
-Go의 I/O는 메서드 하나짜리 interface 두 개가 전부다. 이벤트 루프도 콜백도 없다. for 루프와 if 분기로 데이터를 읽고 쓴다. 이 단순함이 가능한 이유는 Go가 동시성을 goroutine으로 처리하기 때문이다. 블로킹 I/O가 goroutine을 블로킹할 뿐 OS 스레드를 블로킹하지 않으므로, 비동기 I/O의 복잡성 없이도 높은 동시성을 달성할 수 있다. 이 부분은 concurrency 편에서 자세히 다룬다.
+Go의 I/O는 메서드 하나짜리 interface 두 개가 전부다. 이벤트 루프도 콜백도 없다. for 루프와 if 분기로 데이터를 읽고 쓴다. 이 단순함이 가능한 이유는 Go가 동시성을 goroutine으로 처리하기 때문이다. 블로킹 I/O가 goroutine을 블로킹할 뿐 OS 스레드를 블로킹하지 않으므로, 비동기 I/O의 복잡성 없이도 높은 동시성을 달성할 수 있다.

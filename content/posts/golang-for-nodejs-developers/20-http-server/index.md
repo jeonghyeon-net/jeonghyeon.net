@@ -298,39 +298,7 @@ func main() {
 
 ## 미들웨어
 
-Express에서 미들웨어는 `app.use(middleware)` 형태다. Go에서 미들웨어는 `Handler`를 받아서 `Handler`를 반환하는 함수다:
-
-```go
-func logging(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        log.Printf("%s %s", r.Method, r.URL.Path)
-        next.ServeHTTP(w, r)
-    })
-}
-
-func main() {
-    mux := http.NewServeMux()
-    mux.HandleFunc("GET /", home)
-
-    handler := logging(mux)
-    http.ListenAndServe(":8080", handler)
-}
-```
-
-`Handler`를 감싸는 함수 합성이다. Express의 미들웨어 체인이 `next()` 호출로 다음 미들웨어를 실행하는 것과 같은 패턴이다. Go에서는 `next.ServeHTTP(w, r)`이 그 역할을 한다.
-
-여러 미들웨어를 체이닝한다:
-
-```go
-func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
-    for i := len(middlewares) - 1; i >= 0; i-- {
-        h = middlewares[i](h)
-    }
-    return h
-}
-
-handler := chain(mux, logging, cors, auth)
-```
+Go에서 미들웨어는 `Handler`를 받아서 `Handler`를 반환하는 함수다.
 
 ## 서버 타임아웃 설정
 
@@ -426,17 +394,4 @@ process.on("SIGTERM", () => {
 
 Node.js의 `server.close`도 새 연결을 거부하고 기존 연결이 끝나길 기다린다. Go와 개념이 동일하다. 차이점은 Go가 context로 타임아웃을 명시적으로 제어한다는 것이다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 서버 생성 | `http.createServer(handler)` | `http.ListenAndServe(addr, handler)` |
-| 라우팅 | Express `app.get('/path', fn)` | `mux.HandleFunc("GET /path", fn)` |
-| 경로 파라미터 | `req.params.id` | `r.PathValue("id")` |
-| JSON 파싱 | `express.json()` 미들웨어 | `json.NewDecoder(r.Body)` |
-| JSON 응답 | `res.json(data)` | `json.NewEncoder(w).Encode(data)` |
-| 미들웨어 | `app.use(fn)` | `func(http.Handler) http.Handler` |
-| 타임아웃 | `server.timeout` | `http.Server` 필드 |
-| Graceful shutdown | `server.close()` | `srv.Shutdown(ctx)` |
-
-Go의 HTTP 서버는 Express 없이 `http` 모듈만 쓰는 Node.js와 비슷한 수준감이다. 다만 Go 1.22 이후의 `ServeMux`는 Express의 기본 라우팅 기능 대부분을 표준 라이브러리로 제공한다. `Handler` interface와 `io.Reader`/`io.Writer`의 조합은 Go 표준 라이브러리의 설계 철학 — 작은 interface를 합성하여 큰 기능을 만드는 — 이 HTTP 서버에서 어떻게 실현되는지 보여준다.
+`Handler` interface와 `io.Reader`/`io.Writer`의 조합은 Go 표준 라이브러리의 설계 철학 -- 작은 interface를 합성하여 큰 기능을 만드는 -- 이 HTTP 서버에서 실현된 결과다.

@@ -110,7 +110,7 @@ function divide(a, b) {
 const [result, err] = divide(10, 3);
 ```
 
-비슷해 보이지만 본질적으로 다르다. JavaScript의 destructuring은 배열을 만들고 분해하는 것이다. 런타임에 배열 객체가 생성된다. Go의 다중 반환은 언어 레벨에서 지원하는 기능이며, 별도의 객체 할당 없이 레지스터나 스택을 통해 값이 전달된다.
+비슷해 보이지만 본질적으로 다르다. JavaScript의 destructuring은 런타임에 배열 객체를 만들고 분해하는 것이다. Go의 다중 반환은 언어 레벨 기능이며, 별도의 객체 할당 없이 레지스터나 스택을 통해 값이 전달된다.
 
 반환값 중 쓰지 않는 것이 있으면 `_`(blank identifier)로 무시한다:
 
@@ -140,7 +140,7 @@ named return을 쓰면 `return` 뒤에 값을 생략할 수 있다(naked return)
 장점:
 
 - godoc에서 반환값의 의미를 문서화하는 역할을 한다
-- `defer`와 함께 쓸 때 유용하다 (에러 처리 편에서 다룬다)
+- `defer`와 함께 쓸 때 유용하다
 
 단점:
 
@@ -273,9 +273,7 @@ if err != nil {
 fmt.Println(string(data))
 ```
 
-`async function`이 없는 이유는 간단하다. Go에는 비동기 함수라는 개념이 없기 때문이다. `os.ReadFile`은 호출한 goroutine을 블로킹하지만, 다른 goroutine은 계속 실행된다. 비동기 처리가 필요한 상황에서 goroutine을 쓴다. 이 부분은 goroutine 편에서 자세히 다룬다.
-
-결과적으로 Go 코드는 위에서 아래로 순차적으로 읽힌다. callback 중첩도 없고, `.then()` 체인도 없고, `await`을 빼먹을 걱정도 없다.
+Go에는 비동기 함수라는 개념이 없다. `os.ReadFile`은 호출한 goroutine을 블로킹하지만, 다른 goroutine은 계속 실행된다. callback 중첩도, `.then()` 체인도, `await`을 빼먹을 걱정도 없다. 비동기 처리가 필요하면 goroutine을 쓴다.
 
 ## init() 함수
 
@@ -339,18 +337,4 @@ import _ "github.com/lib/pq" // init()만 실행하기 위한 blank import
 
 `_`로 import하면 package를 직접 사용하지 않아도 컴파일 에러가 나지 않는다. `init` 함수의 side effect만 필요한 경우에 쓰는 관용적 패턴이다.
 
-## 정리
-
-| 개념 | JavaScript | Go |
-|---|---|---|
-| 함수 선언 | `function`, arrow function, method | `func` 하나 |
-| 다중 반환 | 불가 (배열/객체로 흉내) | 언어 레벨 지원 |
-| default parameter | `function f(x = 1)` | 없음 (options struct 패턴) |
-| rest/variadic | `...args` (이름 앞) | `args ...T` (타입 앞) |
-| 에러 처리 | try/catch, Promise | 다중 반환 `(result, error)` |
-| 비동기 | async/await | 없음 (goroutine으로 대체) |
-| 클로저 | 지원 | 동일하게 지원 |
-| 모듈 초기화 | top-level 코드 | `init()` 함수 |
-| overloading | 없음 (TypeScript는 시그니처만) | 없음 |
-
-Go의 함수는 단순하다. 선언 방법이 하나이고, 특수 문법이 적다. 대신 다중 반환이라는 강력한 기능이 있고, 이것이 에러 처리의 기반이 된다. 다음 편에서는 Go의 제어 흐름을 살펴본다.
+Go의 함수는 단순하다. 선언 방법이 하나이고, 특수 문법이 적다. 대신 다중 반환이라는 강력한 기능이 있고, 이것이 에러 처리의 기반이 된다.

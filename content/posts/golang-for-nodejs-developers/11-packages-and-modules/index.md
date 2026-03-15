@@ -292,21 +292,4 @@ myapp/
 
 `internal` 패키지는 라이브러리를 만들 때 특히 유용하다. 공개 API와 내부 구현을 명확하게 분리할 수 있다.
 
-## 정리
-
-| 개념 | Node.js (npm) | Go |
-|---|---|---|
-| 코드 단위 | 파일 = 모듈 | 디렉토리 = 패키지 |
-| 공개/비공개 | `export` 키워드 | 대문자/소문자 |
-| 프로젝트 설정 | `package.json` | `go.mod` |
-| 잠금 파일 | `package-lock.json` | `go.sum` |
-| 패키지 저장소 | npmjs.com (중앙 레지스트리) | VCS 경로 (중앙 레지스트리 없음) |
-| 패키지 검색 | npmjs.com | pkg.go.dev |
-| 가용성 보장 | npm registry | proxy.golang.org |
-| CLI 도구 실행 | `npx` | `go install` |
-| 의존성 내장 | `node_modules` (gitignore) | `vendor/` (선택적) |
-| 사용 안 하는 import | 경고 없음 | 컴파일 에러 |
-| 접근 제한 | `exports` 필드 (약한 강제) | `internal` 패키지 (컴파일러 강제) |
-| 문화 | micro-package, 외부 의존성 적극 사용 | stdlib-first, 외부 의존성 최소화 |
-
-Go의 모듈 시스템은 npm보다 단순하다. 중앙 레지스트리 없이 VCS 경로만으로 동작하고, 버전 관리는 git tag로 해결한다. 이 단순함 위에 프록시와 체크섬 데이터베이스가 가용성과 보안을 보장한다. 표준 라이브러리를 먼저 쓰는 문화는 의존성 트리를 얕게 유지하고, left-pad 같은 사고의 가능성을 구조적으로 줄인다.
+Go의 모듈 시스템은 npm보다 단순하다. 중앙 레지스트리 없이 VCS 경로만으로 동작하고, 버전 관리는 git tag로 해결한다. 이 단순함 위에 프록시와 체크섬 데이터베이스가 가용성과 보안을 보장하고, stdlib-first 문화가 의존성 트리를 얕게 유지한다.

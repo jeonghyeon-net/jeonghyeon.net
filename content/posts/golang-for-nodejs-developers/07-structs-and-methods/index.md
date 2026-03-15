@@ -173,7 +173,7 @@ Go 컴파일러는 호출 방식을 자동으로 맞춰준다. `user.SetName("Bo
 | 일관성 (타입의 다른 메서드가 pointer receiver면) | pointer |
 | 읽기 전용, struct가 작을 때 | value |
 
-실무에서는 한 타입의 메서드를 모두 pointer receiver로 통일하는 경우가 많다. 일부만 pointer이고 나머지가 value이면 혼란스럽다. 확신이 없으면 pointer receiver를 쓴다.
+실무에서는 한 타입의 메서드를 pointer receiver로 통일하는 경우가 많다. 확신이 없으면 pointer receiver를 쓴다.
 
 ## constructor 패턴
 
@@ -319,7 +319,7 @@ func main() {
 }
 ```
 
-JavaScript의 `extends`였다면 `Dog`를 `Animal` 타입으로 전달할 수 있다. Go에서는 불가능하다. `Dog`와 `Animal`은 별개의 타입이다. 다형성이 필요하면 interface를 쓴다(다음 편에서 다룬다).
+JavaScript의 `extends`였다면 `Dog`를 `Animal` 타입으로 전달할 수 있다. Go에서는 불가능하다. `Dog`와 `Animal`은 별개의 타입이다. 다형성이 필요하면 interface를 쓴다.
 
 ### 메서드 오버라이드
 
@@ -403,16 +403,4 @@ func main() {
 
 상태를 변경하는 타입은 pointer receiver로 통일하고, 생성 시에도 포인터를 반환하는 것이 일반적 패턴이다. JavaScript에서 class 인스턴스가 항상 참조로 다뤄지는 것과 같은 효과다.
 
-## 정리
-
-| 개념 | JavaScript | Go |
-|---|---|---|
-| 데이터 + 동작 | `class` | struct + method |
-| 인스턴스 생성 | `new ClassName()` | `NewXxx()` 함수 관례 |
-| `this` | 암묵적 바인딩 | receiver로 명시 |
-| 상속 | `extends` (is-a) | embedding (has-a) |
-| super 호출 | `super.method()` | `embedded.Method()` |
-| 다중 상속 | 불가 (mixin으로 대체) | 다중 embedding 가능 |
-| 메서드 오버라이드 | 지원 | 같은 이름 메서드로 가림 |
-
-Go의 struct와 method는 class보다 단순하다. 데이터(struct)와 동작(method)이 분리되어 있고, 상속 대신 합성을 쓴다. JavaScript 개발자에게 이 전환이 처음에는 어색하지만, 코드가 명시적이고 예측 가능해진다. 다음 편에서는 Go의 interface를 살펴본다. embedding과 interface가 결합되면 Go가 class 없이도 다형성을 구현하는 방법이 완성된다.
+Go의 struct와 method는 class보다 단순하다. 데이터(struct)와 동작(method)이 분리되어 있고, 상속 대신 합성을 쓴다. embedding과 interface가 결합되면 class 없이도 다형성을 구현할 수 있다.

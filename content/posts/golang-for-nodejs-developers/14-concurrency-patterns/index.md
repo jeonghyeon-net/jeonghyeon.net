@@ -585,18 +585,4 @@ func main() {
 
 그 외에는 `sync.RWMutex` + 일반 map이 보통 더 빠르다. `sync.Map`은 내부적으로 추가 메모리를 사용하고, 타입 안전성도 없다(값이 `any` 타입).
 
-## 정리
-
-| 패턴 | 용도 | Node.js 대응 |
-|---|---|---|
-| `sync.Mutex` | 공유 상태 보호 | `Atomics` (worker_threads) |
-| `sync.RWMutex` | 읽기 위주 공유 상태 | 해당 없음 |
-| `sync.Once` | 한 번만 초기화 | 모듈 시스템 |
-| `errgroup` + context | 에러 전파 + 취소 | `Promise.all` + `AbortController` |
-| `errgroup.SetLimit` | 동시성 제한 | `p-limit` |
-| WaitGroup + 개별 에러 | 모든 결과 수집 | `Promise.allSettled` |
-| Worker Pool | 작업 분배 + 병렬 처리 | `worker_threads`, `p-limit` |
-| 세마포어 | N개 동시 실행 제한 | `p-limit` |
-| `sync.Map` | 동시성 안전 map | `Map` (싱글 스레드라 불필요) |
-
-Node.js에서는 싱글 스레드 모델이 대부분의 동시성 문제를 원천 차단한다. lock이나 race condition을 걱정할 필요가 없다. 반면 Go에서는 goroutine이 메모리를 공유하기 때문에 이 패턴들이 필수 도구가 된다. 다음 편에서는 context 패키지를 통해 취소, timeout, 값 전달을 체계적으로 관리하는 방법을 다룬다.
+Node.js에서는 싱글 스레드 모델이 대부분의 동시성 문제를 원천 차단한다. Go에서는 goroutine이 메모리를 공유하기 때문에 이 패턴들이 필수 도구가 된다.

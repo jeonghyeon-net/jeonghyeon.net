@@ -403,9 +403,7 @@ func process() error {
 
 ### 획득과 해제를 가까이 두는 설계
 
-defer의 설계 철학은 리소스의 획득과 해제를 코드상에서 가까이 두는 것이다. Go 공식 블로그의 "Defer, Panic, and Recover" 글에서 Andrew Gerrand는 defer가 리소스 정리를 단순화하기 위한 도구라고 설명한다.
-
-다른 언어들은 이 문제를 각자의 방식으로 풀었다. Java의 `try-with-resources`, Python의 `with` 문, C++의 RAII(Resource Acquisition Is Initialization). 모두 "열었으면 반드시 닫아라"는 같은 문제를 다루지만 접근 방식이 다르다.
+defer의 설계 철학은 리소스의 획득과 해제를 코드상에서 가까이 두는 것이다. Java의 `try-with-resources`, Python의 `with` 문, C++의 RAII가 같은 문제를 다루지만 접근 방식이 다르다.
 
 Java의 `try-with-resources`는 `AutoCloseable` interface를 구현해야 하고, 블록 scope에 묶인다:
 
@@ -418,7 +416,7 @@ try (var f = new FileInputStream("data.txt")) {
 
 C++의 RAII는 객체의 소멸자에 해제 로직을 넣는다. scope를 벗어나면 소멸자가 호출되므로 블록 단위로 관리된다. Go의 defer는 블록이 아닌 함수 단위로 동작한다는 점이 다르다. 그리고 해제 대상이 특정 interface를 구현할 필요가 없다. 어떤 함수든 defer할 수 있다.
 
-Go가 이 방식을 택한 이유가 있다. RAII는 소멸자와 클래스 시스템에 의존하는데, Go에는 클래스가 없다. `try-with-resources`는 별도의 문법 구조가 필요하다. defer는 기존 함수 호출 문법을 그대로 쓴다. `defer` 키워드 하나를 추가하는 것만으로 어떤 함수 호출이든 지연 실행할 수 있다. Go의 "적은 것으로 많은 일을 한다"는 원칙에 부합하는 설계다.
+RAII는 소멸자와 클래스 시스템에 의존하는데, Go에는 클래스가 없다. `try-with-resources`는 별도의 문법 구조가 필요하다. defer는 기존 함수 호출 문법을 그대로 쓴다. `defer` 키워드 하나면 어떤 함수 호출이든 지연 실행할 수 있다.
 
 ### LIFO 순서
 
@@ -524,15 +522,4 @@ try {
 
 최근 TC39에서 논의 중인 Explicit Resource Management 제안(`using` 선언)은 이 문제를 해결하려는 시도다. Go의 defer와 C++의 RAII에서 영감을 받은 것으로 알려져 있다.
 
-## 정리
-
-| 개념 | JavaScript | Go |
-|---|---|---|
-| 조건문 | `if (cond)` | `if cond` (괄호 없음, short statement 가능) |
-| 반복문 | `for`, `while`, `do...while`, `for...of`, `for...in` | `for` 하나 |
-| 컬렉션 순회 | `for...of`, `forEach`, `entries()` | `for range` |
-| switch fall-through | 기본 (break 필수) | 없음 (fallthrough 키워드로 명시) |
-| type 분기 | `typeof`, `instanceof` | type switch |
-| 리소스 정리 | `try...finally` | `defer` (LIFO 스택) |
-
-Go의 제어 흐름은 키워드 수가 적다. 반복은 `for` 하나, fall-through는 명시적, scope는 if의 short statement로 제한한다. 그리고 defer는 리소스 관리를 함수 호출 하나로 해결한다. "열었으면 바로 닫기 코드를 선언한다"는 습관을 들이면 leak에서 벗어날 수 있다. 다음 편에서는 Go의 복합 타입 — array, slice, map, struct를 살펴본다.
+Go의 제어 흐름은 키워드 수가 적다. 반복은 `for` 하나, fall-through는 명시적, scope는 if의 short statement로 제한한다. 그리고 defer는 리소스 관리를 함수 호출 하나로 해결한다. "열었으면 바로 닫기 코드를 선언한다"는 습관을 들이면 leak에서 벗어날 수 있다.

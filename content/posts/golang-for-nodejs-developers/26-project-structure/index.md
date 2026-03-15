@@ -339,17 +339,4 @@ jobs:
 
 Node.js 프로젝트에서 CI에 `npx eslint .`을 추가하는 것과 동일한 위치다. `golangci-lint`는 공식 GitHub Action을 제공하므로 설정이 간단하다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 디렉토리 관례 | 자유 구조 (`src/`, `lib/`, `utils/`) | `cmd/`, `internal/`, `pkg/` |
-| 접근 제한 | `exports` 필드 (약한 강제) | `internal` (컴파일러 강제) |
-| 이름 짓기 | 자유 (camelCase, PascalCase) | 짧은 소문자, 패키지명 중복 금지 |
-| 포매팅 | Prettier (설정 필요) | gofmt (설정 없음) |
-| import 정리 | eslint-plugin-import | goimports |
-| 내장 정적 분석 | (없음) | go vet |
-| 린터 | ESLint | golangci-lint |
-| 린터 설정 | `.eslintrc` (parser, plugin, extends, rules) | `.golangci.yml` (린터 목록) |
-
-Node.js에서 Go로 넘어올 때 가장 크게 느끼는 차이는 선택의 폭이 줄어든다는 것이다. 디렉토리 구조, 코드 스타일, 포매팅 도구 모두 커뮤니티가 수렴한 답이 있다. 처음에는 자유도가 부족하게 느껴질 수 있지만, 프로젝트마다 컨벤션을 새로 정하고 문서화하는 비용이 사라진다. 새로운 Go 프로젝트에 합류했을 때 구조를 파악하는 데 걸리는 시간이 짧다.
+디렉토리 구조, 코드 스타일, 포매팅 도구 모두 커뮤니티가 수렴한 답이 있다. 프로젝트마다 컨벤션을 새로 정하고 문서화하는 비용이 사라지고, 새로운 Go 프로젝트에 합류했을 때 구조를 파악하는 데 걸리는 시간이 짧다.

@@ -184,18 +184,3 @@ Node.js와 비교하면:
 | `require`/`import`로 파일 지정 | import 경로가 package(디렉토리) 단위 |
 
 Go에서 디렉토리 하나가 package 하나다. 같은 디렉토리의 `.go` 파일은 모두 같은 package에 속한다. Node.js처럼 파일 단위로 import하지 않고 package 단위로 import한다. 디렉토리 구조의 상세한 설계는 시리즈 후반에서 다룬다.
-
-## 정리
-
-| 작업 | Node.js | Go |
-|---|---|---|
-| 버전 관리 | `nvm` | `go install golang.org/dl/...` 또는 `goenv` |
-| 프로젝트 초기화 | `npm init` | `go mod init` |
-| 의존성 파일 | `package.json` | `go.mod` |
-| lock 파일 | `package-lock.json` | `go.sum` |
-| 실행 | `node index.js` | `go run main.go` |
-| 빌드 | 번들러 (webpack, esbuild 등) | `go build` |
-| formatter | Prettier (설정 필요) | `gofmt` (내장, 설정 불필요) |
-| language server | `tsserver` | `gopls` |
-
-환경이 갖춰졌다. 다음 편에서는 Go의 기본 타입과 변수 선언을 살펴본다. Node.js 개발자가 처음 만나면 어색하게 느낄 부분이 몇 가지 있다.

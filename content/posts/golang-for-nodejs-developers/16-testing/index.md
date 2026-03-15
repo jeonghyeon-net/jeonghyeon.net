@@ -12,17 +12,7 @@ math/
   calc_test.go     # 테스트 코드
 ```
 
-같은 패키지 안에 테스트 파일을 함께 둔다. Node.js처럼 `__tests__/` 디렉토리를 따로 만들 필요가 없다. 테스트 대상과 테스트 코드가 같은 디렉토리에 있으므로 탐색이 쉽다.
-
-```javascript
-// Node.js 프로젝트 구조 (프레임워크마다 다름)
-// src/math/calc.js
-// src/math/__tests__/calc.test.js
-// 또는
-// src/math/calc.test.js
-```
-
-Go는 `_test.go` 하나로 통일된다. 프레임워크마다 다른 파일 패턴을 외울 필요가 없다.
+같은 패키지 안에 테스트 파일을 함께 둔다. Node.js처럼 `__tests__/` 디렉토리를 따로 만들 필요가 없다.
 
 ## testing.T 기본
 
@@ -344,19 +334,4 @@ $ go test -race ./...
 
 CI에서 `-race`를 기본으로 켜두는 것이 권장된다.
 
-## 정리
-
-| 개념 | Node.js (Jest/Vitest) | Go |
-|---|---|---|
-| 테스트 프레임워크 | Jest, Mocha, Vitest 등 선택 | `go test` (내장) |
-| 테스트 파일 | `*.test.js`, `*.spec.js` | `*_test.go` |
-| assertion | `expect(x).toBe(y)` | `if got != want { t.Errorf(...) }` |
-| 테스트 그룹 | `describe` / `it` | 테이블 드리븐 + `t.Run` |
-| setup/teardown | `beforeEach` / `afterEach` | `t.Cleanup`, 직접 호출 |
-| 벤치마크 | `benchmark.js` 등 외부 | `testing.B` (내장) |
-| fuzzing | `fast-check` 등 외부 | `testing.F` (내장, Go 1.18+) |
-| 테스트 데이터 | 자유 배치 | `testdata/` 관례 |
-| 전체 실행 | `npm test` | `go test ./...` |
-| race 감지 | 해당 없음 (싱글 스레드) | `go test -race` |
-
-Go의 테스트 도구는 "하나의 표준 방법"이라는 Go의 철학을 그대로 반영한다. 프레임워크 선택, 설정 파일, 플러그인 조합 같은 의사결정이 필요 없다. `_test.go` 파일을 만들고, `Test`로 시작하는 함수를 작성하고, `go test`를 실행한다. 이 단순함이 Go 테스트의 핵심이다.
+`_test.go` 파일을 만들고, `Test`로 시작하는 함수를 작성하고, `go test`를 실행한다. 프레임워크 선택, 설정 파일, 플러그인 조합 같은 의사결정이 필요 없다. 이 단순함이 Go 테스트의 핵심이다.

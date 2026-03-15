@@ -368,17 +368,4 @@ build-all:
 
 `package.json` scripts 대비 장점은 dependency 체인, 변수 치환, 셸 명령의 자유로운 조합이 가능하다는 것이다. 단점은 문법이 직관적이지 않고, 탭/스페이스 구분 같은 함정이 있다는 것이다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 작업 자동화 | `package.json` scripts | Makefile |
-| 빌드 | webpack, esbuild, tsc | `go build` |
-| 실행 | `node dist/index.js` | `./bin/server` (네이티브 바이너리) |
-| 크로스 플랫폼 | 런타임이 추상화 | `GOOS`/`GOARCH` 크로스 컴파일 |
-| 버전 주입 | `process.env.VERSION` | `-ldflags -X` |
-| 조건부 코드 | 런타임 분기, tree shaking | build tag (컴파일 타임 제외) |
-| 번들링 | 번들러 필요 (의존성 포함) | 불필요 (단일 바이너리) |
-| 바이너리 크기 최적화 | minification, tree shaking | `-ldflags "-s -w"` |
-
-Node.js에서 Go로 넘어올 때 가장 쾌적한 변화 중 하나가 빌드 파이프라인의 단순함이다. webpack 설정 파일 수백 줄, babel plugin 조합, TypeScript 컴파일러 옵션 -- 이런 것들이 `go build` 한 줄로 대체된다. Makefile은 그 단순한 명령들을 조직화하는 얇은 레이어일 뿐이다.
+webpack 설정, babel plugin 조합, TypeScript 컴파일러 옵션 -- 이런 것들이 `go build` 한 줄로 대체된다. Makefile은 그 단순한 명령들을 조직화하는 얇은 레이어일 뿐이다.

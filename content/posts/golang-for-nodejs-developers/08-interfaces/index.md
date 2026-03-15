@@ -55,7 +55,7 @@ func main() {
 
 이 설계의 핵심은 의존성 방향에 있다. TypeScript에서는 구현하는 쪽(`Dog`)이 interface(`Speaker`)를 알아야 한다. Go에서는 `Dog`가 `Speaker`의 존재를 모른다. `Dog`는 자기 메서드를 정의할 뿐이고, `Speaker`를 요구하는 쪽이 `Dog`를 받아들일지 결정한다.
 
-이 차이가 실무에서 큰 영향을 준다. 외부 라이브러리가 노출하는 타입이 내 코드의 interface를 만족하면, 해당 라이브러리를 수정하지 않고도 바로 사용할 수 있다. TypeScript에서는 wrapper를 만들거나 type assertion을 써야 하는 상황이 Go에서는 자연스럽게 해결된다.
+이 차이가 실무에서 큰 영향을 준다. 외부 라이브러리가 노출하는 타입이 프로젝트 코드의 interface를 만족하면, 해당 라이브러리를 수정하지 않고도 바로 사용할 수 있다. TypeScript에서는 wrapper를 만들거나 type assertion을 써야 하는 상황이 Go에서는 자연스럽게 해결된다.
 
 ## interface 정의와 사용
 
@@ -343,16 +343,4 @@ var _ Speaker = (*Dog)(nil)
 
 `_`에 할당하므로 변수는 사용되지 않지만, 컴파일러가 `Dog`를 `Speaker`에 할당할 수 있는지 확인한다. 메서드가 빠져 있으면 이 줄에서 컴파일 에러가 발생한다. 표준 라이브러리와 주요 오픈소스 프로젝트에서 흔히 볼 수 있는 패턴이다.
 
-## 정리
-
-| 개념 | TypeScript | Go |
-|---|---|---|
-| interface 구현 | `implements` 명시 | implicit (메서드만 맞으면 됨) |
-| interface 내용 | property + method | method만 |
-| 합성 | `extends` | embedding |
-| 모든 타입 수용 | `any` (타입 검사 끔) | `any` (타입 검사 유지) |
-| 타입 복원 | type guard 함수 | type assertion `x.(T)` |
-| 타입 분기 | discriminated union | type switch |
-| interface 크기 | 제한 없음 | 1-2개 메서드 권장 |
-
-Go의 interface는 "무엇인가"가 아니라 "무엇을 하는가"로 타입을 분류한다. 이 철학이 implicit satisfaction, 작은 interface, interface composition으로 이어진다. class 계층 구조를 설계하는 대신 행동 단위로 추상화하는 사고 방식은 Go 코드 전반에 스며들어 있다. 07편의 struct와 embedding, 그리고 이번 편의 interface가 결합되면 상속 없이도 유연한 다형성을 구현하는 Go의 타입 시스템이 완성된다.
+Go의 interface는 "무엇인가"가 아니라 "무엇을 하는가"로 타입을 분류한다. 이 철학이 implicit satisfaction, 작은 interface, interface composition으로 이어진다. 07편의 struct와 embedding, 그리고 이번 편의 interface가 결합되면 상속 없이도 유연한 다형성을 구현하는 Go의 타입 시스템이 완성된다.

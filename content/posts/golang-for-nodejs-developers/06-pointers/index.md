@@ -40,7 +40,7 @@ func main() {
 
 JavaScript와 결과가 다르다. Go에서 `copy := user`는 struct 전체를 복사한다. `copy`를 수정해도 `user`에 영향이 없다.
 
-그런데 원본을 수정하고 싶다면? 큰 struct를 함수에 넘길 때마다 복사하면 비효율적이지 않은가? 이때 포인터가 필요하다.
+원본을 수정하고 싶거나, 큰 struct의 복사를 피하고 싶을 때 포인터가 필요하다.
 
 ## &와 * 연산자
 
@@ -188,7 +188,7 @@ go build -gcflags="-m" main.go
 - interface 타입에 값을 저장하는 경우
 - slice나 map에 포인터를 넣는 경우
 
-Node.js 개발자에게 이 지식이 당장 필요하지는 않다. 하지만 Go로 고성능 서비스를 작성하게 되면 "왜 이 변수가 힙에 갔는가"를 추적하는 순간이 온다.
+Go로 고성능 서비스를 작성하게 되면 "왜 이 변수가 힙에 갔는가"를 추적하는 순간이 온다.
 
 ## nil 포인터
 
@@ -215,7 +215,7 @@ const obj = null;
 console.log(obj.name); // TypeError: Cannot read properties of null
 ```
 
-차이점이 있다. JavaScript의 TypeError는 try-catch로 잡을 수 있다. Go의 nil pointer dereference panic도 recover로 잡을 수 있지만, 실무에서는 panic이 발생하지 않도록 사전에 nil을 체크하는 것이 관례다:
+JavaScript의 TypeError는 try-catch로 잡을 수 있다. Go의 panic도 recover로 잡을 수 있지만, 실무에서는 사전에 nil을 체크하는 것이 관례다:
 
 ```go
 func printName(u *User) {
@@ -237,8 +237,6 @@ console.log(user?.name ?? "no user");
 Go에는 optional chaining이 없다. 명시적인 nil 체크가 필요하다.
 
 ## 포인터를 쓸 때와 쓰지 않을 때
-
-모든 곳에 포인터를 쓸 수도 있고, 아예 안 쓸 수도 있다. 하지만 실무에서는 기준이 있다.
 
 ### 포인터를 쓰는 경우
 
@@ -324,7 +322,7 @@ func appendItem(s []string, item string) []string {
 | 불변성 보장 | | O |
 | map, slice, channel | | O (이미 참조 의미) |
 
-확신이 없으면 값으로 시작하고, 필요할 때 포인터로 바꾼다. 불필요한 포인터는 코드를 복잡하게 만들고, nil panic의 가능성을 열어둔다.
+확신이 없으면 값으로 시작하고, 필요할 때 포인터로 바꾼다.
 
 ## Go가 포인터 산술을 제거한 이유
 
@@ -357,15 +355,4 @@ C에서는 `arr[5]`가 undefined behavior다. 프로그램이 죽을 수도, 엉
 
 표준 라이브러리의 `unsafe` package를 사용하면 포인터 산술이 가능하다. 하지만 이름이 말해주듯 "안전하지 않다." `unsafe`를 사용하는 코드는 Go의 메모리 안전성 보장을 포기하는 것이며, Go 버전 업그레이드 시 호환성이 보장되지 않는다. CGo 연동이나 극단적인 성능 최적화가 아닌 이상 쓸 일이 없다.
 
-## 정리
-
-| 개념 | JavaScript | Go |
-|---|---|---|
-| 참조 전달 | object는 자동 참조 | 포인터로 명시 (`&`, `*`) |
-| 값 전달 | 원시 타입 자동 복사 | 모든 타입 기본 복사 |
-| null/nil 접근 | TypeError (try-catch 가능) | panic (recover 가능, 사전 체크 권장) |
-| 메모리 관리 | V8 엔진 자동 | escape analysis + GC |
-| 포인터 산술 | 없음 | 없음 (`unsafe` 제외) |
-| optional chaining | `?.` | 없음 (명시적 nil 체크) |
-
-JavaScript 개발자에게 포인터는 낯선 개념이다. "왜 이런 저수준 도구를 써야 하는가"라는 의문이 들 수 있다. 하지만 Go의 포인터는 C의 포인터가 아니다. 산술이 없고, 경계 검사가 있고, escape analysis가 메모리 관리를 돕는다. 위험한 부분은 제거하고 유용한 부분만 남긴 설계다. `&`로 주소를 넘기고, `*`로 값에 접근한다 — 이 두 연산자에 익숙해지면 된다. 다음 편에서는 Go의 복합 타입인 struct를 살펴본다.
+Go의 포인터는 C의 포인터가 아니다. 산술이 없고, 경계 검사가 있고, escape analysis가 메모리 관리를 돕는다. 위험한 부분은 제거하고 유용한 부분만 남긴 설계다. `&`로 주소를 넘기고, `*`로 값에 접근한다 -- 이 두 연산자에 익숙해지면 된다.

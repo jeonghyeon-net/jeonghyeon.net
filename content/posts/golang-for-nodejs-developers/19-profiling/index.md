@@ -92,8 +92,6 @@ PASS
 $ go test -bench=. -memprofile=mem.prof
 ```
 
-Node.js에서 벤치마크 결과를 프로파일링하려면 별도 도구를 조합해야 한다. Go는 테스트 도구에 프로파일 수집이 통합되어 있다.
-
 ## go tool pprof
 
 수집한 프로파일을 분석한다. `go tool pprof`는 대화형 셸을 제공한다:
@@ -349,16 +347,5 @@ Node.js와 Go의 프로파일링 도구를 대응시키면:
 | 벤치마크 연계 | 없음 (별도 조합) | `-cpuprofile`, `-memprofile` |
 
 가장 큰 차이는 통합도다. Node.js는 `node --prof`로 수집하고, `node --prof-process`로 변환하고, Chrome DevTools나 clinic.js로 시각화하는 식으로 여러 도구를 조합한다. Go는 `go tool pprof` 하나로 수집, 분석, 시각화를 모두 처리한다.
-
-## 정리
-
-프로파일링 워크플로우를 요약한다:
-
-1. **벤치마크 작성** — `testing.B`로 대상 함수를 벤치마크한다.
-2. **프로파일 수집** — `-cpuprofile`, `-memprofile`로 프로파일을 저장한다.
-3. **병목 식별** — `go tool pprof`에서 `top`, `list`로 핫스팟을 찾는다.
-4. **시각화** — `-http` 플래그로 flame graph를 확인한다.
-5. **최적화** — 병목 코드를 수정한다.
-6. **검증** — 벤치마크를 다시 실행하여 개선을 확인한다.
 
 서버 애플리케이션에서는 `net/http/pprof`를 미리 넣어두고, 문제가 발생했을 때 프로파일을 수집한다. goroutine 스케줄링이나 GC 관련 문제는 `go tool trace`로 타임라인을 확인한다. 모두 표준 도구이므로 별도 설치가 필요 없다.

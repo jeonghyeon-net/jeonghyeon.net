@@ -434,18 +434,4 @@ Node.js에서 knex migrate나 Prisma migrate를 사용하는 것처럼, Go에서
 
 둘 다 `database/sql`과 함께 동작한다. 마이그레이션 자체는 언어에 독립적인 SQL 작업이므로, 도구 선택은 취향 차이다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 표준 인터페이스 | 없음 (드라이버마다 다름) | `database/sql` |
-| 커넥션 풀 | pg-pool (별도 설정) | `sql.DB` (내장) |
-| 단일 행 조회 | `pool.query` + `rows[0]` | `db.QueryRow` + `Scan` |
-| 여러 행 조회 | `pool.query` + `rows` | `db.Query` + `rows.Next` |
-| 트랜잭션 | BEGIN/COMMIT SQL 직접 | `db.Begin` / `tx.Commit` |
-| NULL 처리 | `null` 그대로 | `sql.NullString` 등 |
-| 타임아웃 | AbortSignal, 쿼리 옵션 | `QueryContext` + context |
-| ORM | Prisma, TypeORM | GORM |
-| 마이그레이션 | knex migrate, Prisma migrate | golang-migrate, goose |
-
-Node.js에서 Go로 넘어올 때 가장 큰 차이는 표준 인터페이스의 존재다. Node.js에서는 pg와 mysql2의 API가 다르지만, Go에서는 드라이버만 교체하면 동일한 `database/sql` API를 사용한다. 커넥션 풀이 내장이라는 점도 설정 부담을 줄인다. `Scan`의 번거로움은 sqlx나 sqlc로 해결할 수 있다.
+`database/sql`은 드라이버만 교체하면 동일한 API로 모든 데이터베이스를 다룰 수 있게 한다. `Scan`의 번거로움은 sqlx나 sqlc로 해결할 수 있다.

@@ -443,17 +443,4 @@ fmt.Println(len(m)) // 0
 // m["key"] = 1     // panic: assignment to entry in nil map
 ```
 
-## 정리
-
-| 개념 | JavaScript | Go |
-|---|---|---|
-| 고정 크기 배열 | 없음 | `[N]T` (값 타입, 복사됨) |
-| 동적 배열 | `Array` | `[]T` (slice, header + underlying array) |
-| key-value 저장 | `Object`, `Map` | `map[K]V` |
-| 원소 추가 | `push()` (원본 변경) | `append()` (새 slice 반환) |
-| 부분 추출 | `slice()` (새 배열) | `s[low:high]` (underlying array 공유) |
-| 순회 | `for...of`, `forEach` | `for range` |
-| 순서 보장 (map) | `Map`은 삽입순 보장 | 의도적 랜덤화 |
-| 빈 컬렉션 | `[]` 하나 | nil vs empty 구분 |
-
-Go의 컬렉션은 JavaScript보다 저수준이다. slice header의 구조를 이해해야 공유 문제를 피할 수 있고, nil과 empty의 차이를 알아야 API에서 예상치 못한 `null`을 방지할 수 있다. 06편의 포인터 개념이 slice 내부에서 다시 등장한다는 점이 핵심이다. 다음 편에서는 Go의 에러 처리를 살펴본다.
+Go의 컬렉션은 JavaScript보다 저수준이다. slice header의 구조를 이해해야 공유 문제를 피할 수 있고, nil과 empty의 차이를 알아야 API에서 예상치 못한 `null`을 방지할 수 있다.

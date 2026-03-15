@@ -300,21 +300,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 `--mount=type=cache`는 Docker BuildKit의 캐시 마운트다. Go 컴파일러의 빌드 캐시(`/root/.cache/go-build`)와 모듈 캐시(`/go/pkg/mod`)를 빌드 간에 공유한다. 파일 하나를 고치고 다시 빌드하면 변경된 패키지만 재컴파일한다.
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 베이스 이미지 | `node:22-alpine` (~180 MB) | `scratch` (0 MB) |
-| 최종 이미지 크기 | 230-380 MB | 10-15 MB |
-| 런타임 의존성 | Node.js + node_modules | 없음 (단일 바이너리) |
-| .dockerignore | node_modules 제외 필수 | 거의 불필요 |
-| 멀티스테이지 | 선택적 | 사실상 필수 |
-| health check | curl/wget 사용 | 바이너리에 내장 |
-| SIGTERM 처리 | `process.on('SIGTERM')` | `signal.Notify` |
-| 컨테이너 시작 시간 | 500ms-2s | 10-50ms |
-
-Go의 Docker 이미지는 작고 빠르다. 이미지 크기, 시작 시간, 보안 표면 모두에서 이점이 있다. 서버리스 환경이나 Kubernetes에서 pod이 빠르게 스케일 아웃해야 할 때 이 차이가 실질적으로 체감된다.
+Go의 Docker 이미지는 작고 빠르다. 외부 런타임 의존성이 없으므로 `scratch` 위에 바이너리 하나만 놓으면 프로덕션 배포가 가능하다. 서버리스 환경이나 Kubernetes에서 pod이 빠르게 스케일 아웃해야 할 때 이 차이가 실질적으로 체감된다.
 
 ---
 
-28편에 걸쳐 Node.js 개발자의 관점에서 Go를 살펴봤다. 타입 시스템, 동시성 모델, 에러 처리, 프로젝트 구조, 빌드, 배포까지 -- Node.js에서 익숙하던 개념이 Go에서 어떻게 대응되는지를 중심으로 다뤘다. 두 언어는 철학이 다르고 잘하는 영역도 다르다. 이 시리즈가 Go를 시작하는 데 필요한 맥락을 제공했길 바란다.
+28편에 걸쳐 Node.js 개발자의 관점에서 Go를 살펴봤다. 두 언어는 철학이 다르고 잘하는 영역도 다르다. 이 시리즈가 Go를 시작하는 데 필요한 맥락을 제공했길 바란다.

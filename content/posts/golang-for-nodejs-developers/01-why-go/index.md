@@ -130,8 +130,6 @@ Node.js 개발 사이클은 edit-run이다. 파일을 수정하고 `node app.js`
 
 Go 개발 사이클은 edit-compile-run이다. `go run main.go`를 실행하면 내부적으로 컴파일이 먼저 일어난다. 컴파일이 실패하면 실행되지 않는다.
 
-이 차이가 일상에 미치는 영향은 크다.
-
 **사용하지 않는 import는 컴파일 에러다:**
 
 ```go
@@ -157,7 +155,7 @@ func main() {
 x declared and not used
 ```
 
-Node.js에서는 lint rule로 잡는 것들이 Go에서는 컴파일러 레벨에서 강제된다. ESLint 설정을 고민할 필요가 없다. 컴파일러가 이미 그 역할을 한다.
+Node.js에서 lint rule로 잡는 것들이 Go에서는 컴파일러 레벨에서 강제된다.
 
 REPL은 없다. Node.js처럼 `node`를 입력하고 한 줄씩 실행하는 환경이 Go에는 기본 제공되지 않는다. 대신 Go Playground(https://go.dev/play/)가 있고, 로컬에서는 짧은 코드를 `main.go`에 작성하고 `go run main.go`로 확인하는 것이 일반적이다.
 
@@ -165,18 +163,4 @@ REPL은 없다. Node.js처럼 `node`를 입력하고 한 줄씩 실행하는 환
 
 중간 규모 프로젝트라면 `go build`가 1~2초 안에 끝난다. edit-compile-run 사이클이 edit-run과 체감상 크게 다르지 않다.
 
-## 정리
-
-| | Node.js | Go |
-|---|---|---|
-| 실행 모델 | V8 + 이벤트 루프 | 네이티브 바이너리 + goroutine |
-| 동시성 | single-thread 비동기 I/O | 멀티코어 병렬 실행 |
-| 배포 | runtime + node_modules + 소스 | 단일 바이너리 |
-| Docker 이미지 | ~200MB (slim) | ~10MB (scratch) |
-| 타입 | TypeScript (선택적, 런타임에 소멸) | 내장 정적 타입 (컴파일러 강제) |
-| 개발 사이클 | edit-run | edit-compile-run |
-| REPL | 있음 | 없음 |
-
 Go는 "더 적은 것으로 더 많은 일을 한다"는 철학을 일관되게 따르는 언어다. 기능이 적고, 문법이 단순하고, 선택지가 제한된다. Node.js 생태계의 풍부한 표현력과 유연함에 익숙한 개발자에게 이 제약은 처음에 답답하게 느껴질 수 있다. 하지만 그 제약이 바로 Go의 강점이다.
-
-다음 편에서는 Go 개발 환경을 설정하고, 첫 번째 프로그램을 작성한다.

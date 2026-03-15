@@ -372,7 +372,7 @@ type Event struct {
 }
 ```
 
-`time.Time`을 임베딩하면서 `MarshalJSON`/`UnmarshalJSON`만 오버라이드한다. `"2006-01-02"` 포맷 문자열은 Go의 특수한 레이아웃 규칙인데, 12편에서 다뤘다.
+`time.Time`을 임베딩하면서 `MarshalJSON`/`UnmarshalJSON`만 오버라이드한다. `"2006-01-02"` 포맷 문자열은 Go의 특수한 레이아웃 규칙이다. Go는 `2006-01-02T15:04:05Z07:00`이라는 고정된 참조 시각(Mon Jan 2 15:04:05 MST 2006)의 각 구성 요소를 포맷 지시자로 사용한다.
 
 ## 성능
 
@@ -403,16 +403,4 @@ json.Marshal(v)
 json.Unmarshal(data, &v)
 ```
 
-## 정리
-
-| 개념 | Node.js | Go |
-|---|---|---|
-| 직렬화 | `JSON.stringify(obj)` | `json.Marshal(v)` |
-| 역직렬화 | `JSON.parse(str)` | `json.Unmarshal(data, &v)` |
-| 키 이름 매핑 | 수동으로 객체 변환 | struct tag `json:"name"` |
-| 필드 제외 | `delete` 또는 destructuring | `json:"-"` |
-| null/부재 구분 | `undefined` vs `null` | 포인터 타입 사용 |
-| 스트리밍 | `JSONStream` 등 서드파티 | `json.Decoder` / `json.Encoder` 내장 |
-| 커스텀 직렬화 | `toJSON()` 메서드 | `MarshalJSON()` / `UnmarshalJSON()` interface |
-
-Node.js에서 Go로 넘어올 때 가장 낯선 부분은 struct와 tag를 먼저 정의해야 한다는 점이다. `JSON.parse` 한 줄이면 끝나는 작업에 struct 정의, tag 작성, 에러 처리까지 필요하다. 하지만 이 작업은 한 번만 하면 된다. struct가 정의되면 그 이후의 코드는 타입 안전하고, IDE 자동완성이 동작하며, 잘못된 필드 접근은 컴파일 타임에 잡힌다.
+struct와 tag를 먼저 정의하는 것이 `JSON.parse` 한 줄에 비해 번거로워 보이지만, struct가 정의되면 그 이후의 코드는 타입 안전하고, IDE 자동완성이 동작하며, 잘못된 필드 접근은 컴파일 타임에 잡힌다.

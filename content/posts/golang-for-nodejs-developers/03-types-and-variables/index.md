@@ -324,7 +324,7 @@ var f Fahrenheit = Fahrenheit(c) // 명시적 변환 필요
 
 `Celsius`와 `Fahrenheit`는 내부적으로 둘 다 `float64`이지만 다른 타입이다. 섭씨를 화씨 변수에 실수로 대입하는 버그를 컴파일러가 잡아준다.
 
-단, Go의 interface는 구조적 타이핑이다. 메서드 시그니처가 일치하면 명시적 선언 없이 interface를 만족한다. 이 부분은 interface 편에서 자세히 다룬다.
+단, Go의 interface는 구조적 타이핑이다. 메서드 시그니처가 일치하면 명시적 선언 없이 interface를 만족한다.
 
 ## typeof가 없는 세상
 
@@ -351,20 +351,6 @@ s := "hello"
 fmt.Printf("%T\n", s) // string
 ```
 
-`%T`는 디버깅용이다. 프로덕션 코드에서 타입에 따라 분기해야 한다면 type switch를 쓴다(interface 편에서 다룬다).
+`%T`는 디버깅용이다. 프로덕션 코드에서 타입에 따라 분기해야 한다면 type switch를 쓴다.
 
-## 정리
-
-| 개념 | JavaScript/TypeScript | Go |
-|---|---|---|
-| 변수 선언 | `let`, `const`, `var` | `var`, `:=` |
-| 숫자 타입 | `number` (float64) | `int`, `int8`~`int64`, `float32`, `float64` 등 |
-| 문자열 인코딩 | UTF-16 | UTF-8 |
-| 초기화 안 한 변수 | `undefined` | zero value (타입별 기본값) |
-| 형변환 | 암묵적 (coercion) | 명시적만 허용 |
-| 상수 | `const` (재대입 불가) | `const` (컴파일 타임 확정) |
-| enum | `enum` (TypeScript) | `iota` + 타입 별칭 |
-| 타이핑 | 구조적 (structural) | 명목적 (nominal), interface만 구조적 |
-| 런타임 타입 확인 | `typeof` | 없음 (`%T`는 디버깅용) |
-
-Go의 타입 시스템은 TypeScript보다 표현력이 낮지만 명확하다. 암묵적으로 일어나는 것이 없고, 컴파일러가 강제하는 것이 많다. 다음 편에서는 함수 선언과 다중 반환값, 그리고 Go의 에러 처리 방식을 살펴본다.
+Go의 타입 시스템은 TypeScript보다 표현력이 낮지만 명확하다. 암묵적으로 일어나는 것이 없고, 컴파일러가 강제하는 것이 많다.
