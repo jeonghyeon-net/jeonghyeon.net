@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build-all": "cd ../transformer && go build -o transformer . && cp transformer ../editor/src-tauri/binaries/transformer-aarch64-apple-darwin && cd ../editor && tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
   },
