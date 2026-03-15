@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version-file: transformer/go.mod
           cache-dependency-path: transformer/go.sum
 
       - name: Build site
