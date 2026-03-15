@@ -9,6 +9,7 @@ import (
 
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/text"
 )
 
@@ -190,7 +191,9 @@ func ExtractFirstImage(source []byte) string {
 // MarkdownToHTML converts a markdown source to an HTML string.
 func MarkdownToHTML(source []byte) (string, error) {
 	var buf bytes.Buffer
-	md := goldmark.New()
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+	)
 	if err := md.Convert(source, &buf); err != nil {
 		return "", err
 	}

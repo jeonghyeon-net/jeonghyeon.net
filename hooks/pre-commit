@@ -10,6 +10,9 @@ if [ ! -f "$TRANSFORMER" ]; then
     (cd "$REPO_ROOT/transformer" && go build -o transformer .)
 fi
 
+echo "Running tests..."
+(cd "$REPO_ROOT/transformer" && go test ./...)
+
 echo "Running content-linter..."
 "$TRANSFORMER" lint "$CONTENT_DIR"
 
