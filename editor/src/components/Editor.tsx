@@ -12,7 +12,6 @@ interface EditorProps {
   content: string;
   onContentChange: (content: string) => void;
   onSave: () => void;
-  insertText: string | null;
   onImageDrop?: (paths: string[]) => void;
   viewRef?: React.MutableRefObject<EditorView | null>;
 }
@@ -68,7 +67,6 @@ function Editor({
   content,
   onContentChange,
   onSave,
-  insertText,
   onImageDrop,
   viewRef: externalViewRef,
 }: EditorProps) {
@@ -143,18 +141,6 @@ function Editor({
     }
     contentRef.current = content;
   }, [content]);
-
-  // Insert text at cursor
-  useEffect(() => {
-    if (!insertText || !viewRef.current) return;
-
-    const view = viewRef.current;
-    const cursor = view.state.selection.main.head;
-    view.dispatch({
-      changes: { from: cursor, insert: insertText },
-      selection: { anchor: cursor + insertText.length },
-    });
-  }, [insertText]);
 
   // Tauri drag-drop listener
   useEffect(() => {

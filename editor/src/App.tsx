@@ -88,7 +88,7 @@ function App() {
     if (!isDirty || !currentFile) return;
     const timer = setTimeout(async () => {
       lastSaveTimeRef.current = Date.now();
-      await invoke("write_file", { path: currentFile, content });
+      await invoke("write_file", { path: currentFile, content: contentForSaveRef.current });
       setIsDirty(false);
       setRenderTrigger((prev) => prev + 1);
     }, 1000);
@@ -342,7 +342,6 @@ function App() {
                     setIsDirty(true);
                   }}
                   onSave={handleSave}
-                  insertText={null}
                   onImageDrop={handleImageDrop}
                   viewRef={editorViewRef}
                 />
@@ -370,7 +369,6 @@ function App() {
                   setIsDirty(true);
                 }}
                 onSave={handleSave}
-                insertText={null}
                 onImageDrop={handleImageDrop}
                 viewRef={editorViewRef}
               />

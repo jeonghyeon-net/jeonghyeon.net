@@ -81,6 +81,9 @@ pub async fn rename_path(old_path: String, new_path: String) -> Result<(), Strin
 
 #[tauri::command]
 pub async fn list_content_tree(project_path: String) -> Result<Vec<FileEntry>, String> {
+    if !is_safe_path(&project_path) {
+        return Err("Invalid project path".to_string());
+    }
     tauri::async_runtime::spawn_blocking(move || {
         let content_dir = Path::new(&project_path).join("content");
         build_tree(&content_dir).map_err(|e| format!("Failed to list content tree: {}", e))
@@ -91,6 +94,9 @@ pub async fn list_content_tree(project_path: String) -> Result<Vec<FileEntry>, S
 
 #[tauri::command]
 pub async fn watch_content_dir(app: AppHandle, project_path: String) -> Result<(), String> {
+    if !is_safe_path(&project_path) {
+        return Err("Invalid project path".to_string());
+    }
     let content_dir = Path::new(&project_path).join("content");
     if !content_dir.exists() {
         return Err("Content directory does not exist".to_string());

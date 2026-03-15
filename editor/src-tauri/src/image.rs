@@ -1,10 +1,18 @@
 use std::path::Path;
 use std::process::Command;
 
+use crate::util::is_safe_path;
+
 const MAX_DIM: u32 = 700;
 
 #[tauri::command]
 pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<String, String> {
+    if !is_safe_path(&source_path) {
+        return Err("Invalid source path".to_string());
+    }
+    if !is_safe_path(&dest_dir) {
+        return Err("Invalid destination path".to_string());
+    }
     tauri::async_runtime::spawn_blocking(move || {
         let src = Path::new(&source_path);
         let dest = Path::new(&dest_dir);
