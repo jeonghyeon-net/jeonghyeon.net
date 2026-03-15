@@ -262,6 +262,25 @@ function App() {
     [currentFile, handleFileSelect]
   );
 
+  // Delete file/folder
+  const handleDelete = useCallback(
+    async (path: string) => {
+      try {
+        await invoke("delete_path", { path });
+        // If deleted file was open, clear editor
+        if (currentFile?.startsWith(path)) {
+          setCurrentFile(null);
+          setContent("");
+          setSelectedFile(null);
+          setViewingImage(null);
+        }
+      } catch (e) {
+        console.error("Failed to delete:", e);
+      }
+    },
+    [currentFile]
+  );
+
   if (loading) {
     return (
       <div className="loading-screen">
@@ -306,6 +325,7 @@ function App() {
               onFileSelect={handleFileSelect}
               onNewPost={handleNewPost}
               onRename={handleRename}
+              onDelete={handleDelete}
             />
           )}
         </div>

@@ -20,6 +20,7 @@ pub fn run() {
             files::read_file,
             files::write_file,
             files::rename_path,
+            files::delete_path,
             files::list_content_tree,
             files::watch_content_dir,
             git::get_repo_path,

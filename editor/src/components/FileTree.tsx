@@ -16,6 +16,7 @@ type FileTreeProps = {
   onFileSelect: (path: string) => void;
   onNewPost: (parentPath: string, slug: string) => void;
   onRename: (oldPath: string, newName: string) => void;
+  onDelete: (path: string) => void;
 };
 
 // Detect if a directory is a series (has children with 2-digit prefixes)
@@ -223,6 +224,7 @@ export default function FileTree({
   onFileSelect,
   onNewPost,
   onRename,
+  onDelete,
 }: FileTreeProps) {
   const [tree, setTree] = useState<FileEntry[]>([]);
   const [inlineAction, setInlineAction] = useState<InlineAction | null>(null);
@@ -303,7 +305,7 @@ export default function FileTree({
   const postsPath = tree.find((e) => e.name === "posts")?.path;
 
   // Build context menu items based on target
-  const menuItems: { label: string; action: () => void }[] = [];
+  const menuItems: { label: string; action?: () => void; danger?: boolean }[] = [];
   if (contextMenu) {
     const entry = contextMenu.entry;
 
@@ -328,13 +330,24 @@ export default function FileTree({
       });
     }
 
-    // "Rename" — if right-clicked on a specific item
+    // "Rename" and "Delete" — if right-clicked on a specific item
     if (entry) {
       menuItems.push({
         label: "Rename",
         action: () => {
           setInlineAction({ type: "rename", entry });
           setContextMenu(null);
+        },
+      });
+      menuItems.push({ label: "---" }); // separator
+      menuItems.push({
+        label: "Delete",
+        danger: true,
+        action: () => {
+          setContextMenu(null);
+          if (confirm(`Delete "${entry.name}"?`)) {
+            onDelete(entry.path);
+          }
         },
       });
     }
@@ -368,11 +381,15 @@ export default function FileTree({
           className="context-menu"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
-          {menuItems.map((item) => (
-            <div key={item.label} className="context-menu-item" onClick={item.action}>
-              {item.label}
-            </div>
-          ))}
+          {menuItems.map((item, i) =>
+            item.label === "---" ? (
+              <div key={`sep-${i}`} className="context-menu-separator" />
+            ) : (
+              <div key={item.label} className={`context-menu-item${item.danger ? " danger" : ""}`} onClick={item.action}>
+                {item.label}
+              </div>
+            )
+          )}
         </div>
       )}
     </div>

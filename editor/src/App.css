@@ -580,9 +580,9 @@ html, body, #root {
 .context-menu {
   position: fixed;
   background: var(--win-face);
-  border: 2px solid;
-  border-color: var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+  border: 1px solid var(--win-darker);
+  outline: 1px solid var(--win-light);
+  outline-offset: -2px;
   padding: 2px;
   z-index: 1000;
   min-width: 120px;
@@ -598,6 +598,17 @@ html, body, #root {
 .context-menu-item:hover {
   background: var(--win-highlight);
   color: var(--win-highlight-text);
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: var(--win-dark);
+  border-bottom: 1px solid var(--win-light);
+  margin: 3px 2px;
+}
+
+.context-menu-item.danger:hover {
+  background: #c00000;
 }
 
 

@@ -67,6 +67,23 @@ pub async fn write_file(path: String, content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub async fn delete_path(path: String) -> Result<(), String> {
+    if !is_safe_path(&path) {
+        return Err("Invalid file path".to_string());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        let p = std::path::Path::new(&path);
+        if p.is_dir() {
+            std::fs::remove_dir_all(p).map_err(|e| format!("Failed to delete: {}", e))
+        } else {
+            std::fs::remove_file(p).map_err(|e| format!("Failed to delete: {}", e))
+        }
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
+}
+
+#[tauri::command]
 pub async fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
     if !is_safe_path(&old_path) || !is_safe_path(&new_path) {
         return Err("Invalid file path".to_string());
