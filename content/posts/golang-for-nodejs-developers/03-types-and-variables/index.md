@@ -197,7 +197,7 @@ fmt.Println(cfg.Debug)   // false
 fmt.Println(cfg.Timeout) // 0
 ```
 
-"Port를 설정하지 않은 것"과 "Port를 0으로 설정한 것"을 구분할 수 없다. 이 문제를 해결하는 패턴(pointer 사용, sentinel value 등)은 시리즈 후반에서 다룬다.
+"Port를 설정하지 않은 것"과 "Port를 0으로 설정한 것"을 구분할 수 없다. 이 문제를 해결하려면 pointer를 사용하거나(`*int`이면 nil이 "미설정"을 의미), sentinel value를 두는 방법이 있다.
 
 ## 타입 변환
 

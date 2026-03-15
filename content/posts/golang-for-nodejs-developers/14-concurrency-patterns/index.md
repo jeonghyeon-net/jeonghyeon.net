@@ -143,7 +143,7 @@ func main() {
 
 ## errgroup — Promise.all + 에러 처리
 
-13편에서 `errgroup`의 기본 사용법을 다뤘다. 여기서는 context 연동과 동시성 제한을 살펴본다.
+`errgroup`은 `golang.org/x/sync/errgroup` 패키지가 제공하는 도구로, 여러 goroutine을 실행하고 첫 번째 에러를 반환한다. context 연동과 동시성 제한을 살펴본다.
 
 ### context로 빠른 실패
 
@@ -284,7 +284,7 @@ func fetchAll(urls []string) []Result {
 
 ## Worker Pool
 
-13편에서 fan-out/fan-in의 기본 형태를 다뤘다. 여기서는 실전에 가까운 worker pool을 구성한다. graceful shutdown과 에러 처리를 포함한다:
+fan-out은 여러 goroutine이 하나의 channel에서 작업을 가져가는 것이고, fan-in은 여러 goroutine의 결과를 하나의 channel로 모으는 것이다. 실전에 가까운 worker pool을 구성한다. graceful shutdown과 에러 처리를 포함한다:
 
 ```go
 type Job struct {

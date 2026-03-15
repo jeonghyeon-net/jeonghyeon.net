@@ -296,10 +296,6 @@ func main() {
 2. `json.NewDecoder`와 `json.NewEncoder`가 `io.Reader`/`io.Writer`를 활용한다. `r.Body`에서 직접 디코딩하고, `w`에 직접 인코딩한다.
 3. `http.Error`는 에러 응답을 보내는 편의 함수다.
 
-## 미들웨어
-
-Go에서 미들웨어는 `Handler`를 받아서 `Handler`를 반환하는 함수다.
-
 ## 서버 타임아웃 설정
 
 `http.ListenAndServe`는 간편하지만 타임아웃 설정이 없다. 프로덕션에서는 `http.Server`를 직접 구성한다:

@@ -195,7 +195,7 @@ build-all:
 go tool dist list
 ```
 
-## ldflags -- 빌드 시 변수 주입
+## ldflags — 빌드 시 변수 주입
 
 Node.js에서는 환경변수로 애플리케이션에 설정값을 전달한다. `process.env.VERSION` 같은 식이다. Go에서는 빌드 시점에 변수 값을 바이너리에 직접 주입할 수 있다. `-ldflags`(linker flags)를 사용한다:
 
@@ -244,7 +244,7 @@ go build -ldflags "-s -w" -o bin/server ./cmd/server
 
 `-s`는 심볼 테이블을, `-w`는 DWARF 디버그 정보를 제거한다. 바이너리 크기가 20-30% 줄어든다. 디버깅이 필요 없는 프로덕션 배포에 적합하다.
 
-## build tag -- 조건부 컴파일
+## build tag — 조건부 컴파일
 
 특정 조건에서만 포함할 코드를 지정할 수 있다. 파일 상단에 `//go:build` 지시자를 추가한다:
 

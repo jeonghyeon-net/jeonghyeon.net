@@ -183,4 +183,4 @@ Node.js와 비교하면:
 | `index.js`가 모듈 진입점 | 디렉토리 = package. 진입점 파일 개념 없음 |
 | `require`/`import`로 파일 지정 | import 경로가 package(디렉토리) 단위 |
 
-Go에서 디렉토리 하나가 package 하나다. 같은 디렉토리의 `.go` 파일은 모두 같은 package에 속한다. Node.js처럼 파일 단위로 import하지 않고 package 단위로 import한다. 디렉토리 구조의 상세한 설계는 시리즈 후반에서 다룬다.
+Go에서 디렉토리 하나가 package 하나다. 같은 디렉토리의 `.go` 파일은 모두 같은 package에 속한다. Node.js처럼 파일 단위로 import하지 않고 package 단위로 import한다.

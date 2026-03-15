@@ -17,7 +17,7 @@ console.log(arr.length); // 101 (중간은 비어 있다)
 
 Go는 이런 유연함을 포기하는 대신 메모리 레이아웃이 명확하다. 컬렉션 타입이 세 가지로 나뉘고, 각각의 특성이 다르다.
 
-## array - 고정 크기
+## array — 고정 크기
 
 array는 크기가 타입의 일부다. `[3]int`와 `[5]int`는 서로 다른 타입이다.
 
@@ -46,7 +46,7 @@ JavaScript에서는 배열을 대입하면 참조가 복사된다. 한쪽을 수
 
 실무에서 array를 직접 쓸 일은 거의 없다. 크기가 고정이라는 제약이 너무 크기 때문이다. 대부분의 경우 slice를 쓴다.
 
-## slice - 동적 크기
+## slice — 동적 크기
 
 slice는 Go에서 가장 많이 쓰는 컬렉션 타입이다. JavaScript의 Array와 가장 비슷한 역할을 한다.
 
@@ -157,7 +157,7 @@ fmt.Println(arr[1]) // 999 - 원본도 바뀐다!
 
 JavaScript의 `slice()`는 새 배열을 만들지만, Go의 slicing은 같은 underlying array를 공유하는 새 slice header를 만든다. 이것이 가장 주의해야 할 차이점이다.
 
-### slice 함정 - underlying array 공유
+### slice 함정 — underlying array 공유
 
 같은 underlying array를 공유하는 slice들은 서로 영향을 준다:
 
