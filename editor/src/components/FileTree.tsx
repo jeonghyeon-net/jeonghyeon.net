@@ -302,8 +302,9 @@ export default function FileTree({
     setInlineAction(null);
   }, [inlineAction, onNewPost, onRename]);
 
-  // Find the posts directory path
+  // Find content directory paths
   const postsPath = tree.find((e) => e.name === "posts")?.path;
+  const playlistsPath = tree.find((e) => e.name === "playlists")?.path;
 
   // Build context menu items based on target
   const menuItems: { label: string; action?: () => void; danger?: boolean }[] = [];
@@ -311,7 +312,6 @@ export default function FileTree({
     const entry = contextMenu.entry;
 
     if (entry && isSeries(entry)) {
-      // Right-click on a series folder → new post goes inside as numbered entry
       const num = nextSeriesNumber(entry);
       menuItems.push({
         label: "New Post",
@@ -321,11 +321,20 @@ export default function FileTree({
         },
       });
     } else if (postsPath) {
-      // Otherwise → new post at posts root
       menuItems.push({
         label: "New Post",
         action: () => {
           setInlineAction({ type: "new-post", parentPath: postsPath, prefix: "" });
+          setContextMenu(null);
+        },
+      });
+    }
+
+    if (playlistsPath) {
+      menuItems.push({
+        label: "New Playlist",
+        action: () => {
+          setInlineAction({ type: "new-post", parentPath: playlistsPath, prefix: "" });
           setContextMenu(null);
         },
       });

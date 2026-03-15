@@ -17,10 +17,14 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
         let src = Path::new(&source_path);
         let dest = Path::new(&dest_dir);
 
-        let file_name = src
+        let original_name = src
             .file_name()
-            .ok_or_else(|| "Invalid source path".to_string())?;
-        let copied = dest.join(file_name);
+            .ok_or_else(|| "Invalid source path".to_string())?
+            .to_string_lossy();
+
+        // Sanitize filename: replace spaces with hyphens, lowercase
+        let sanitized_name = original_name.replace(' ', "-").to_lowercase();
+        let copied = dest.join(&sanitized_name);
 
         // If already .webp, just copy to destination without conversion
         let src_ext = src
@@ -30,7 +34,7 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
         if src_ext == "webp" {
             std::fs::copy(src, &copied)
                 .map_err(|e| format!("Failed to copy file: {}", e))?;
-            return Ok(file_name.to_string_lossy().to_string());
+            return Ok(sanitized_name);
         }
 
         // 1. Copy source to dest_dir
@@ -65,11 +69,12 @@ pub async fn optimize_image(source_path: String, dest_dir: String) -> Result<Str
             .unwrap_or(0);
 
         // 3. Build cwebp command
-        let stem = src
+        let sanitized_stem = Path::new(&sanitized_name)
             .file_stem()
             .ok_or_else(|| "Invalid file name".to_string())?
-            .to_string_lossy();
-        let webp_name = format!("{}.webp", stem);
+            .to_string_lossy()
+            .to_string();
+        let webp_name = format!("{}.webp", sanitized_stem);
         let webp_path = dest.join(&webp_name);
 
         let mut args: Vec<String> = vec!["-q".to_string(), "80".to_string()];

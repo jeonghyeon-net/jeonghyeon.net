@@ -114,12 +114,6 @@ func Generate(contentDir string) (map[string]string, error) {
 			return filepath.SkipDir
 		}
 
-		// Skip if index.md already exists
-		indexPath := filepath.Join(absPath, "index.md")
-		if _, err := os.Stat(indexPath); err == nil {
-			return nil
-		}
-
 		// Read subdirectories
 		entries, err := os.ReadDir(absPath)
 		if err != nil {
