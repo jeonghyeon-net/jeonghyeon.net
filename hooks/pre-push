@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CONTENT_DIR="$REPO_ROOT/content"
+
+NON_WEBP=$(find "$CONTENT_DIR" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.bmp" -o -name "*.tiff" -o -name "*.svg" \) 2>/dev/null || true)
+
+if [ -n "$NON_WEBP" ]; then
+    echo "ERROR: Non-WebP images found in content/:"
+    echo "$NON_WEBP"
+    echo ""
+    echo "Run 'make optimize' to convert them to WebP."
+    exit 1
+fi
+
+echo "Pre-push checks passed."

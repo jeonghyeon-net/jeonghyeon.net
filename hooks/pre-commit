@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+TRANSFORMER="$REPO_ROOT/transformer/transformer"
+CONTENT_DIR="$REPO_ROOT/content"
+
+if [ ! -f "$TRANSFORMER" ]; then
+    echo "Building transformer..."
+    (cd "$REPO_ROOT/transformer" && go build -o transformer .)
+fi
+
+echo "Running content-linter..."
+"$TRANSFORMER" lint "$CONTENT_DIR"
+
+echo "Running auto-index..."
+CREATED=$("$TRANSFORMER" index "$CONTENT_DIR")
+if [ -n "$CREATED" ]; then
+    echo "$CREATED" | while read -r file; do
+        git add "$file"
+    done
+    echo "Auto-indexed files staged."
+fi
+
+echo "Pre-commit checks passed."
