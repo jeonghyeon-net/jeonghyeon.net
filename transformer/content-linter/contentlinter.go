@@ -110,7 +110,7 @@ func LintDir(contentDir string) []LintError {
 	var errs []LintError
 
 	// 1. layout-required: _layout/header.md and _layout/footer.md must exist
-	for _, name := range []string{"_layout/header.md", "_layout/footer.md"} {
+	for _, name := range []string{"_layout/header/index.md", "_layout/footer/index.md"} {
 		p := filepath.Join(contentDir, name)
 		if _, err := os.Stat(p); os.IsNotExist(err) {
 			errs = append(errs, LintError{
@@ -154,7 +154,7 @@ func LintDir(contentDir string) []LintError {
 
 		// 2. blog-loose-md: .md files directly under blog/ are forbidden
 		parts := strings.SplitN(relPath, string(filepath.Separator), 3)
-		if len(parts) == 2 && parts[0] == "blog" {
+		if len(parts) == 2 && parts[0] == "blog" && filepath.Base(relPath) != "index.md" {
 			errs = append(errs, LintError{
 				File:    relPath,
 				Code:    "blog-loose-md",

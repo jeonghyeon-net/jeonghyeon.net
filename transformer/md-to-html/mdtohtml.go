@@ -95,13 +95,13 @@ type pageInfo struct {
 // Render converts contentDir into distDir with HTML pages, sitemap, feed, and llms.txt.
 func Render(contentDir, distDir, siteURL string) error {
 	// Read layout files
-	headerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "header.md"))
+	headerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "header", "index.md"))
 	if err != nil {
-		return fmt.Errorf("read header.md: %w", err)
+		return fmt.Errorf("read header/index.md: %w", err)
 	}
-	footerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "footer.md"))
+	footerSrc, err := os.ReadFile(filepath.Join(contentDir, "_layout", "footer", "index.md"))
 	if err != nil {
-		return fmt.Errorf("read footer.md: %w", err)
+		return fmt.Errorf("read footer/index.md: %w", err)
 	}
 
 	headerHTML, err := markdownutil.MarkdownToHTML(headerSrc)
@@ -132,11 +132,18 @@ func Render(contentDir, distDir, siteURL string) error {
 
 		slashRel := filepath.ToSlash(relPath)
 
-		// Skip _layout directory
-		if d.IsDir() {
-			if slashRel == "_layout" || strings.HasPrefix(slashRel, "_layout/") {
-				return filepath.SkipDir
+		// _layout: skip .md files (already read above), but copy non-.md files (badges etc.)
+		if strings.HasPrefix(slashRel, "_layout/") || slashRel == "_layout" {
+			if d.IsDir() {
+				return nil
 			}
+			if filepath.Ext(relPath) != ".md" {
+				return copyFile(absPath, filepath.Join(distDir, relPath))
+			}
+			return nil
+		}
+
+		if d.IsDir() {
 			return nil
 		}
 
@@ -175,13 +182,26 @@ func Render(contentDir, distDir, siteURL string) error {
 			// Collect page info for sitemap/feed/llms
 			url := relPathToURL(slashRel, siteURL)
 			is404 := slashRel == "404.md"
-			isBlog := strings.HasPrefix(slashRel, "blog/")
+			// Blog post = under blog/ but not blog/index.md itself (which is a listing page)
+			isBlogPost := strings.HasPrefix(slashRel, "blog/") && slashRel != "blog/index.md"
+			// Check if this is a leaf post (has no subdirectories with index.md = not a series listing)
+			if isBlogPost {
+				dir := filepath.Dir(filepath.Join(contentDir, slashRel))
+				entries, _ := os.ReadDir(dir)
+				for _, e := range entries {
+					if e.IsDir() {
+						// This folder has subdirectories → it's a series/category listing, not a post
+						isBlogPost = false
+						break
+					}
+				}
+			}
 
 			pages = append(pages, pageInfo{
 				title:       title,
 				description: description,
 				url:         url,
-				isBlog:      isBlog,
+				isBlog:      isBlogPost,
 				is404:       is404,
 			})
 		} else {
