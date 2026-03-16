@@ -1,10 +1,10 @@
 # 제어 흐름
 
-Go의 제어 흐름을 살펴본다. if, for, switch는 JavaScript와 형태가 비슷하지만 미묘한 차이가 있고, defer는 Node.js에 없는 개념이다.
+Go의 if, for, switch는 JavaScript와 형태가 비슷하지만 미묘한 차이가 있다. defer는 Go 고유의 리소스 관리 도구다.
 
 ## if문
 
-JavaScript의 if문과 구조는 같다. 다만 조건에 괄호가 필요 없다.
+구조는 JavaScript와 같다. 조건에 괄호가 필요 없다는 점이 다르다.
 
 ```javascript
 // JavaScript
@@ -31,7 +31,7 @@ Go에서 조건에 괄호를 쓰면 동작은 하지만 `gofmt`가 제거한다.
 
 ### short statement
 
-Go의 if에는 JavaScript에 없는 기능이 있다. 조건 앞에 짧은 문장(short statement)을 넣을 수 있다.
+Go의 if는 조건 앞에 짧은 문장(short statement)을 넣을 수 있다.
 
 ```go
 if err := doSomething(); err != nil {
@@ -66,11 +66,11 @@ if f, err := os.Open("config.json"); err != nil {
 
 ## for
 
-Go에는 반복문이 `for` 하나뿐이다. JavaScript의 `while`, `do...while`, `for...of`, `for...in`이 전부 `for`로 대체된다.
+Go에는 반복문이 `for` 하나뿐이다. `while`, `do...while`, `for...of`, `for...in`이 모두 `for`로 대체된다.
 
 ### 전통적인 for
 
-JavaScript와 형태가 같다. 괄호가 없을 뿐이다.
+괄호가 없을 뿐 형태는 동일하다.
 
 ```javascript
 // JavaScript
@@ -87,7 +87,7 @@ for i := 0; i < 5; i++ {
 
 ### while 스타일
 
-JavaScript의 `while`은 Go에서 조건만 있는 `for`다.
+`while`에 해당하는 것은 조건만 있는 `for`다.
 
 ```javascript
 // JavaScript
@@ -134,7 +134,7 @@ for {
 
 ## range
 
-JavaScript의 `for...of`와 `for...in`에 대응하는 것이 Go의 `range`다.
+`for...of`와 `for...in`에 대응하는 것이 `range`다.
 
 ### slice 순회
 
@@ -153,7 +153,7 @@ for i, fruit := range fruits {
 }
 ```
 
-`range`는 index와 value를 동시에 반환한다. JavaScript의 `forEach`나 `entries()`를 별도로 호출할 필요 없이 기본 동작이다.
+`range`는 index와 value를 동시에 반환한다. `forEach`나 `entries()`를 별도로 호출할 필요 없이 기본 동작이다.
 
 index가 필요 없으면 `_`로 무시한다:
 
@@ -188,7 +188,7 @@ for key, value := range ages {
 }
 ```
 
-Go의 map 순회 순서는 의도적으로 무작위다. JavaScript의 `Object.entries()`는 속성 추가 순서를 보장하지만, Go는 보장하지 않는다. 순서에 의존하는 코드를 작성하면 실행할 때마다 결과가 달라질 수 있다.
+map 순회 순서는 의도적으로 무작위다. `Object.entries()`가 속성 추가 순서를 보장하는 것과 다르다. 순서에 의존하는 코드를 작성하면 실행할 때마다 결과가 달라질 수 있다.
 
 ### string 순회
 
@@ -214,7 +214,7 @@ for i := range 5 {
 
 ## switch
 
-JavaScript의 switch는 fall-through가 기본이다. `break`를 빼먹으면 다음 case까지 실행된다:
+JavaScript의 switch는 fall-through가 기본이고, `break`를 빼먹으면 다음 case까지 실행된다:
 
 ```javascript
 // JavaScript
@@ -330,11 +330,11 @@ func main() {
 }
 ```
 
-JavaScript의 `typeof`와 비슷한 역할이지만, Go의 type switch는 컴파일러가 타입을 검증한다. 각 case 안에서 `t`는 해당 타입으로 자동 변환되므로 별도의 타입 단언이 필요 없다.
+`typeof`와 비슷한 역할이지만, type switch는 컴파일러가 타입을 검증한다. 각 case 안에서 `t`는 해당 타입으로 자동 변환되므로 별도의 타입 단언이 필요 없다.
 
 ## defer
 
-Node.js에 없는 개념이다. `defer`는 함수가 끝날 때 실행할 코드를 예약한다.
+`defer`는 함수가 끝날 때 실행할 코드를 예약한다.
 
 ```go
 func readFile() error {
@@ -503,9 +503,9 @@ deferred: 42
 
 이 차이를 이해하지 못하면 디버깅이 어려워진다. 값을 캡처하고 싶으면 인자로 전달하고, 변수를 참조하고 싶으면 클로저를 쓴다.
 
-### Node.js에서의 유사 패턴
+### try...finally와의 비교
 
-Node.js에는 defer가 없지만 비슷한 필요는 존재한다. 보통 `try...finally`로 처리한다:
+비슷한 필요를 JavaScript에서는 `try...finally`로 처리한다:
 
 ```javascript
 // Node.js

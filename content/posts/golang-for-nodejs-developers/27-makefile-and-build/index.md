@@ -1,23 +1,10 @@
 # Makefile과 빌드
 
-Node.js 프로젝트에서 `package.json`의 `scripts`는 빌드, 테스트, 린팅 같은 반복 작업을 명령 하나로 실행하게 해준다. Go 프로젝트에서 이 역할을 하는 것이 Makefile이다. Go는 번들러도, 트랜스파일러도 필요 없다. `go build` 하나면 바이너리가 나온다. 하지만 빌드 옵션, 테스트, 린팅, 크로스 컴파일을 매번 타이핑하는 것은 비효율적이다. Makefile이 이를 해결한다.
+Go는 번들러도, 트랜스파일러도 필요 없다. `go build` 하나면 바이너리가 나온다. 하지만 빌드 옵션, 테스트, 린팅, 크로스 컴파일을 매번 타이핑하는 것은 비효율적이다. `package.json` scripts와 같은 역할을 Makefile이 한다.
 
 ## 왜 Makefile인가
 
-Node.js에서는 `npm run build`, `npm test`, `npm run lint` 등을 `package.json`에 정의한다:
-
-```json
-{
-  "scripts": {
-    "build": "esbuild src/index.ts --bundle --outdir=dist",
-    "test": "jest",
-    "lint": "eslint .",
-    "fmt": "prettier --write ."
-  }
-}
-```
-
-Go 프로젝트에는 `package.json`이 없다. `go.mod`는 의존성만 관리하고 스크립트 기능이 없다. 대신 Makefile을 쓴다:
+`go.mod`는 의존성만 관리하고 스크립트 기능이 없다. `npm run build` 같은 단축 명령이 필요하면 Makefile을 쓴다:
 
 ```makefile
 build:
@@ -33,7 +20,7 @@ fmt:
 	gofmt -w .
 ```
 
-`make build`, `make test`, `make lint`. Node.js의 `npm run`과 같은 역할이다.
+`make build`, `make test`, `make lint`. `npm run`과 같은 역할이다.
 
 Makefile은 Go 전용 도구가 아니다. C/C++ 시대부터 존재한 범용 빌드 도구다. Go 커뮤니티가 Makefile을 선호하는 이유는 단순하다. 의존성 없이 대부분의 시스템에 이미 설치되어 있고, 셸 명령을 그대로 쓸 수 있으며, 파일 의존성 기반 증분 빌드를 지원한다.
 
@@ -112,18 +99,7 @@ clean:
 
 `run`은 `build`를 dependency로 가진다. `make run`을 실행하면 먼저 `build`가 실행되고, 성공하면 바이너리를 실행한다. `lint`는 `vet`에 의존하므로 `make lint`를 실행하면 `go vet`이 먼저 돌고, 이어서 `golangci-lint`가 실행된다.
 
-Node.js 대응 관계:
-
-| Makefile target | npm script 대응 | 설명 |
-|---|---|---|
-| `make build` | `npm run build` | 빌드 |
-| `make run` | `npm start` | 실행 |
-| `make test` | `npm test` | 테스트 |
-| `make lint` | `npm run lint` | 린팅 |
-| `make fmt` | `npm run fmt` | 포매팅 |
-| `make clean` | `rm -rf dist/` | 빌드 산출물 삭제 |
-
-핵심적인 차이가 하나 있다. Node.js의 `npm run build`는 webpack, esbuild, tsc 같은 번들러나 트랜스파일러를 호출한다. 수백 개의 소스 파일을 하나의 번들로 합치고, TypeScript를 JavaScript로 변환하고, tree shaking으로 불필요한 코드를 제거한다. Go의 `make build`는 `go build` 하나를 호출한다. 번들러가 필요 없다. 컴파일러가 의존성 분석, 데드코드 제거, 단일 바이너리 생성을 모두 처리한다.
+webpack, esbuild, tsc 같은 번들러나 트랜스파일러 조합이 `go build` 하나로 대체된다. 컴파일러가 의존성 분석, 데드코드 제거, 단일 바이너리 생성을 모두 처리한다.
 
 ## go build 옵션
 
@@ -153,7 +129,7 @@ go build -x ./cmd/server
 
 ## 크로스 컴파일
 
-Node.js 애플리케이션은 Node.js 런타임이 설치된 곳이면 어디서든 실행된다. 플랫폼별 빌드라는 개념 자체가 거의 없다. Go는 네이티브 바이너리를 생성하므로 대상 OS와 아키텍처에 맞게 빌드해야 한다.
+Go는 네이티브 바이너리를 생성하므로 대상 OS와 아키텍처에 맞게 빌드해야 한다. 런타임이 알아서 플랫폼 차이를 흡수해주지 않는다.
 
 Go의 크로스 컴파일은 환경변수 두 개면 된다:
 
@@ -197,7 +173,7 @@ go tool dist list
 
 ## ldflags — 빌드 시 변수 주입
 
-Node.js에서는 환경변수로 애플리케이션에 설정값을 전달한다. `process.env.VERSION` 같은 식이다. Go에서는 빌드 시점에 변수 값을 바이너리에 직접 주입할 수 있다. `-ldflags`(linker flags)를 사용한다:
+`process.env.VERSION`처럼 런타임에 환경변수를 읽는 대신, 빌드 시점에 변수 값을 바이너리에 직접 주입할 수 있다. `-ldflags`(linker flags)를 사용한다:
 
 ```go
 // main.go
@@ -314,7 +290,7 @@ build tag의 논리 연산도 지원한다:
 
 `&&`는 AND, `||`는 OR, `!`는 NOT이다.
 
-Node.js에서 비슷한 패턴은 환경변수에 따른 조건부 import다. `if (process.env.NODE_ENV === 'test') require('./mock')` 같은 식이다. 하지만 이는 런타임 분기다. 프로덕션 번들에 테스트 코드가 포함될 수 있다. Go의 build tag는 컴파일 타임에 파일을 제외하므로 바이너리에 불필요한 코드가 포함되지 않는다.
+`NODE_ENV`에 따른 조건부 import와 달리, build tag는 컴파일 타임에 파일을 제외한다. 프로덕션 바이너리에 테스트 코드가 포함되는 일이 없다.
 
 ## 완성된 Makefile 예시
 
@@ -366,6 +342,4 @@ build-all:
 	done
 ```
 
-`package.json` scripts 대비 장점은 dependency 체인, 변수 치환, 셸 명령의 자유로운 조합이 가능하다는 것이다. 단점은 문법이 직관적이지 않고, 탭/스페이스 구분 같은 함정이 있다는 것이다.
-
-webpack 설정, babel plugin 조합, TypeScript 컴파일러 옵션 -- 이런 것들이 `go build` 한 줄로 대체된다. Makefile은 그 단순한 명령들을 조직화하는 얇은 레이어일 뿐이다.
+`package.json` scripts 대비 장점은 dependency 체인, 변수 치환, 셸 명령의 자유로운 조합이 가능하다는 것이다. 단점은 문법이 직관적이지 않고, 탭/스페이스 구분 같은 함정이 있다는 것이다. Makefile은 단순한 빌드 명령들을 조직화하는 얇은 레이어일 뿐이다.

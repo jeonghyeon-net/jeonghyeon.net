@@ -4,7 +4,7 @@ JavaScript에서 데이터와 동작을 묶는 도구는 class다. Go에는 clas
 
 ## struct 정의
 
-JavaScript의 class와 Go의 struct를 나란히 놓으면:
+JavaScript의 class와 Go의 struct:
 
 ```javascript
 // JavaScript
@@ -33,7 +33,7 @@ func main() {
 
 `type User struct`가 타입을 정의한다. `class`와 달리 constructor가 없고, 메서드도 struct 안에 들어가지 않는다. struct는 순수하게 데이터의 구조만 정의한다.
 
-TypeScript 개발자라면 Go의 struct가 `interface`나 `type`으로 정의하는 데이터 shape에 더 가깝다고 느낄 수 있다:
+TypeScript에서 데이터 shape을 정의하는 `interface`나 `type`에 더 가깝다:
 
 ```typescript
 // TypeScript: 데이터 shape 정의
@@ -45,7 +45,7 @@ interface User {
 const user: User = { name: "Alice", age: 30 };
 ```
 
-형태는 비슷하지만 결정적 차이가 있다. TypeScript의 `interface`는 구조적 타이핑이라 shape만 같으면 호환된다. Go의 struct는 명목적 타이핑이라 이름이 다르면 다른 타입이다(03편 참고). 그리고 Go의 struct에는 메서드를 붙일 수 있지만, TypeScript의 `interface`는 구현을 가질 수 없다.
+형태는 비슷하지만 03편에서 다룬 명목적 타이핑이 struct에도 적용된다. 필드 구성이 동일해도 타입 이름이 다르면 호환되지 않는다. 그리고 Go의 struct에는 메서드를 붙일 수 있지만, TypeScript의 `interface`는 구현을 가질 수 없다.
 
 ## struct 초기화
 
@@ -66,7 +66,7 @@ u4 := User{}         // 동일
 u5 := User{Name: "Charlie"} // Age: 0
 ```
 
-필드 이름을 지정하는 방식이 실무 표준이다. 순서 기반 초기화는 struct에 필드가 추가되면 컴파일 에러가 발생한다. JavaScript의 object literal과 비슷하게 필드 이름을 명시하는 것이 안전하다.
+필드 이름을 지정하는 방식이 실무 표준이다. 순서 기반 초기화는 struct에 필드가 추가되면 컴파일 에러가 발생한다.
 
 03편에서 다룬 zero value가 여기서도 적용된다. struct를 선언만 하면 모든 필드가 zero value로 초기화된다.
 
@@ -106,23 +106,7 @@ JavaScript에서 테스트 데이터를 object 배열로 만드는 것과 같은
 
 ## 메서드
 
-JavaScript에서 메서드는 class 안에 정의한다:
-
-```javascript
-// JavaScript
-class User {
-  constructor(name, age) {
-    this.name = name;
-    this.age = age;
-  }
-
-  greet() {
-    return `Hi, I'm ${this.name}`;
-  }
-}
-```
-
-Go에서 메서드는 struct 밖에 정의한다. `func`와 함수 이름 사이에 receiver를 넣는다:
+JavaScript에서 메서드는 class 안에 정의하지만, Go에서는 struct 밖에 정의한다. `func`와 함수 이름 사이에 receiver를 넣는다:
 
 ```go
 type User struct {
@@ -178,16 +162,7 @@ Go 컴파일러는 호출 방식을 자동으로 맞춰준다. `user.SetName("Bo
 
 ### 어떤 receiver를 쓸 것인가
 
-기준은 06편의 포인터 판단 기준과 동일하다:
-
-| 상황 | receiver |
-|---|---|
-| 필드를 수정해야 할 때 | pointer |
-| struct가 클 때 (복사 비용) | pointer |
-| 일관성 (타입의 다른 메서드가 pointer receiver면) | pointer |
-| 읽기 전용, struct가 작을 때 | value |
-
-실무에서는 한 타입의 메서드를 pointer receiver로 통일하는 경우가 많다. 확신이 없으면 pointer receiver를 쓴다.
+06편의 포인터 판단 기준이 그대로 적용된다. 필드를 수정해야 하거나 struct가 크면 pointer receiver, 읽기 전용이고 struct가 작으면 value receiver를 쓴다. 실무에서는 한 타입의 메서드를 pointer receiver로 통일하는 경우가 많다. 확신이 없으면 pointer receiver를 쓴다.
 
 ## constructor 패턴
 
@@ -255,31 +230,6 @@ func NewServer(port int) (*Server, error) {
 04편에서 다룬 다중 반환으로 에러를 처리한다. JavaScript에서 constructor에서 throw하는 것을 Go에서는 `(nil, error)`로 표현한다.
 
 ## embedding
-
-JavaScript의 class 상속을 떠올려 보자:
-
-```javascript
-// JavaScript
-class Animal {
-  constructor(name) {
-    this.name = name;
-  }
-
-  speak() {
-    return `${this.name} makes a sound`;
-  }
-}
-
-class Dog extends Animal {
-  bark() {
-    return `${this.name} barks`;
-  }
-}
-
-const dog = new Dog("Rex");
-console.log(dog.speak()); // Rex makes a sound
-console.log(dog.bark());  // Rex barks
-```
 
 Go에는 `extends`가 없다. 대신 struct 안에 다른 struct를 필드 이름 없이 넣는다. 이것이 embedding이다:
 
@@ -359,7 +309,7 @@ func main() {
 
 ### 다중 embedding
 
-여러 struct를 동시에 embed할 수 있다. JavaScript의 단일 상속과 다르다:
+여러 struct를 동시에 embed할 수 있다:
 
 ```go
 type Logger struct{}
@@ -417,4 +367,4 @@ func main() {
 
 상태를 변경하는 타입은 pointer receiver로 통일하고, 생성 시에도 포인터를 반환하는 것이 일반적 패턴이다. JavaScript에서 class 인스턴스가 항상 참조로 다뤄지는 것과 같은 효과다.
 
-Go의 struct와 method는 class보다 단순하다. 데이터(struct)와 동작(method)이 분리되어 있고, 상속 대신 합성을 쓴다. TypeScript에서 `interface`로 shape을 정의하고 `class`로 구현을 붙이는 이중 구조가 Go에서는 struct 하나로 통합된다. embedding과 interface가 결합되면 class 없이도 다형성을 구현할 수 있다.
+Go의 struct와 method는 class보다 단순하다. 데이터(struct)와 동작(method)이 분리되어 있고, 상속 대신 합성을 쓴다. embedding과 interface가 결합되면 class 없이도 다형성을 구현할 수 있다.

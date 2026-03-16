@@ -4,7 +4,7 @@
 
 ## sync.Mutex — 공유 상태 보호
 
-Node.js는 싱글 스레드라서 두 콜백이 동시에 같은 변수를 수정할 일이 없다. Go는 다르다. 여러 goroutine이 같은 변수에 동시에 접근하면 race condition이 발생한다:
+여러 goroutine이 같은 변수에 동시에 접근하면 race condition이 발생한다. Node.js의 싱글 스레드 모델에서는 겪을 일이 없는 문제다:
 
 ```go
 func main() {
@@ -61,7 +61,7 @@ func main() {
 
 `Lock()`과 `Unlock()` 사이의 코드는 한 번에 하나의 goroutine만 실행한다. 이 구간을 critical section이라 부른다.
 
-Node.js에서는 이런 코드를 작성할 일이 없다. 하지만 worker_threads를 쓸 때는 `SharedArrayBuffer`와 `Atomics`로 비슷한 문제를 다뤄야 한다:
+`worker_threads`를 쓸 때는 Node.js에서도 비슷한 문제를 다뤄야 한다. `SharedArrayBuffer`와 `Atomics`가 그 도구다:
 
 ```javascript
 // Node.js worker_threads
@@ -117,7 +117,7 @@ func GetDB() *DB {
 }
 ```
 
-Node.js에서 싱글턴은 모듈 시스템이 해결한다. 모듈은 처음 import될 때 한 번만 평가되므로 별도의 장치가 필요 없다:
+Node.js에서는 모듈 시스템이 이 문제를 해결한다. 모듈은 처음 import될 때 한 번만 평가된다:
 
 ```javascript
 // Node.js - db.js
@@ -141,9 +141,9 @@ func main() {
 }
 ```
 
-## errgroup — Promise.all + 에러 처리
+## errgroup
 
-`errgroup`은 `golang.org/x/sync/errgroup` 패키지가 제공하는 도구로, 여러 goroutine을 실행하고 첫 번째 에러를 반환한다. context 연동과 동시성 제한을 살펴본다.
+`errgroup`은 `golang.org/x/sync/errgroup` 패키지가 제공하는 도구로, 여러 goroutine을 실행하고 첫 번째 에러를 반환한다. `Promise.all`과 역할이 비슷하지만, context 연동과 동시성 제한까지 지원한다.
 
 ### context로 빠른 실패
 
@@ -190,7 +190,7 @@ func main() {
 }
 ```
 
-`https://invalid.example`가 실패하면 ctx가 취소되고, `fetchURL`의 HTTP 요청이 ctx 취소를 감지하여 남은 요청도 중단된다. Node.js의 `Promise.all`이 첫 번째 reject에서 즉시 reject되는 것과 비슷하지만, `Promise.all`은 나머지 Promise를 취소하지 않는다. `AbortController`를 직접 연결해야 한다:
+`https://invalid.example`가 실패하면 ctx가 취소되고, `fetchURL`의 HTTP 요청이 ctx 취소를 감지하여 남은 요청도 중단된다. `Promise.all`도 첫 번째 reject에서 즉시 reject되지만, 나머지 Promise를 취소하지는 않는다. `AbortController`를 직접 연결해야 한다:
 
 ```javascript
 // Node.js
@@ -234,9 +234,9 @@ func main() {
 
 내부적으로 세마포어를 사용하여, 4번째 goroutine은 앞선 3개 중 하나가 끝날 때까지 대기한다. API rate limit이 있는 외부 서비스를 호출할 때 유용하다.
 
-## Promise.allSettled 패턴
+## 모든 결과 수집
 
-Node.js의 `Promise.allSettled`는 모든 Promise가 settle될 때까지 기다리고, 각각의 성공/실패 결과를 모은다:
+`Promise.allSettled`는 모든 Promise가 settle될 때까지 기다리고, 각각의 성공/실패 결과를 모은다:
 
 ```javascript
 // Node.js
@@ -368,7 +368,7 @@ func main() {
 
 `jobs`를 닫으면 모든 worker의 `range jobs` 루프가 종료된다. worker가 모두 끝나면 `wg.Wait()`가 반환되고, `results`가 닫히며, `range results` 루프도 종료된다. 이 흐름이 깔끔하게 연결되는 것이 channel 기반 설계의 장점이다.
 
-Node.js에서 비슷한 구조를 만들려면 `worker_threads`와 메시지 전달을 직접 구성하거나, `p-limit` 같은 라이브러리를 써야 한다:
+Node.js에서는 `worker_threads`를 직접 구성하거나 `p-limit` 같은 라이브러리를 써야 한다:
 
 ```javascript
 // Node.js (p-limit 사용)
@@ -585,4 +585,4 @@ func main() {
 
 그 외에는 `sync.RWMutex` + 일반 map이 보통 더 빠르다. `sync.Map`은 내부적으로 추가 메모리를 사용하고, 타입 안전성도 없다(값이 `any` 타입).
 
-Node.js에서는 싱글 스레드 모델이 대부분의 동시성 문제를 원천 차단한다. Go에서는 goroutine이 메모리를 공유하기 때문에 이 패턴들이 필수 도구가 된다.
+goroutine이 메모리를 공유하기 때문에 이 패턴들은 Go 동시성 코드에서 필수 도구다.

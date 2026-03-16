@@ -1,6 +1,6 @@
 # 입출력
 
-Go의 I/O는 두 개의 interface 위에 서 있다. `io.Reader`와 `io.Writer`. 각각 메서드가 하나뿐이다. 08편에서 작은 interface의 위력을 다뤘는데, 그 철학이 가장 극적으로 드러나는 곳이 `io` 패키지다. Node.js의 Stream과 비교하면 설계 방향의 차이가 선명해진다.
+Go의 I/O는 두 개의 interface 위에 서 있다. `io.Reader`와 `io.Writer`. 각각 메서드가 하나뿐이다. 08편에서 작은 interface의 위력을 다뤘는데, 그 철학이 가장 극적으로 드러나는 곳이 `io` 패키지다.
 
 ## io.Reader와 io.Writer
 
@@ -255,7 +255,7 @@ data, err := os.ReadFile("config.json")
 err := os.WriteFile("output.txt", []byte("hello"), 0644)
 ```
 
-Node.js에서 같은 작업:
+`fs.promises.readFile` / `writeFile`과 같은 역할이다:
 
 ```javascript
 // Node.js
@@ -329,7 +329,7 @@ func TestRender(t *testing.T) {
 }
 ```
 
-## Node.js Stream과의 비교
+## Stream 모델의 차이
 
 Node.js의 Stream은 네 가지 타입이 있다:
 

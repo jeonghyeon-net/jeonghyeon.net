@@ -1,27 +1,10 @@
 # 함수
 
-Go의 함수 선언, 다중 반환값, 클로저를 살펴본다. JavaScript의 함수와 형태는 비슷하지만 async/await이 없고, callback 대신 다중 반환으로 에러를 처리하는 등 근본적인 차이가 있다.
+Go의 함수 선언, 다중 반환값, 클로저. async/await이 없고, callback 대신 다중 반환으로 에러를 처리한다.
 
 ## 함수 선언
 
-JavaScript에서 함수를 선언하는 방법은 여러 가지다:
-
-```javascript
-// function declaration
-function add(a, b) {
-  return a + b;
-}
-
-// arrow function
-const add = (a, b) => a + b;
-
-// method
-const obj = {
-  add(a, b) { return a + b; }
-};
-```
-
-Go에는 `func` 키워드 하나뿐이다:
+JavaScript에는 function declaration, arrow function, method shorthand 등 함수를 선언하는 방법이 여러 가지다. Go에는 `func` 키워드 하나뿐이다:
 
 ```go
 func add(a int, b int) int {
@@ -98,7 +81,7 @@ func main() {
 }
 ```
 
-JavaScript에서는 값을 여러 개 반환할 수 없다. 배열이나 객체로 감싸서 destructuring하는 것이 관례다:
+JavaScript에서는 배열이나 객체로 감싸서 destructuring하는 것이 관례다:
 
 ```javascript
 // JavaScript
@@ -110,7 +93,7 @@ function divide(a, b) {
 const [result, err] = divide(10, 3);
 ```
 
-비슷해 보이지만 본질적으로 다르다. JavaScript의 destructuring은 런타임에 배열 객체를 만들고 분해하는 것이다. Go의 다중 반환은 언어 레벨 기능이며, 별도의 객체 할당 없이 레지스터나 스택을 통해 값이 전달된다.
+비슷해 보이지만 JavaScript의 destructuring은 런타임에 배열 객체를 만들고 분해하는 것이다. Go의 다중 반환은 언어 레벨 기능이며, 별도의 객체 할당 없이 레지스터나 스택을 통해 값이 전달된다.
 
 반환값 중 쓰지 않는 것이 있으면 `_`(blank identifier)로 무시한다:
 
@@ -236,7 +219,7 @@ func main() {
 
 JavaScript의 클로저와 동작이 같다. `count` 변수는 `counter` 함수가 반환된 후에도 살아 있고, 반환된 함수가 참조를 유지한다.
 
-## callback에서 다중 반환으로
+## 에러 처리: 다중 반환
 
 Node.js 초기에는 에러 처리를 callback의 첫 번째 인자로 했다:
 
@@ -263,7 +246,7 @@ try {
 }
 ```
 
-Go에서는 callback도 async/await도 쓰지 않는다. 다중 반환으로 에러를 처리한다:
+Go는 다중 반환으로 에러를 처리한다:
 
 ```go
 data, err := os.ReadFile("config.json")
@@ -273,11 +256,11 @@ if err != nil {
 fmt.Println(string(data))
 ```
 
-Go에는 비동기 함수라는 개념이 없다. `os.ReadFile`은 호출한 goroutine을 블로킹하지만, 다른 goroutine은 계속 실행된다. callback 중첩도, `.then()` 체인도, `await`을 빼먹을 걱정도 없다. 비동기 처리가 필요하면 goroutine을 쓴다.
+비동기 함수라는 개념 자체가 없다. `os.ReadFile`은 호출한 goroutine을 블로킹하지만, 다른 goroutine은 계속 실행된다. callback 중첩도, `.then()` 체인도, `await`을 빼먹을 걱정도 없다. 비동기 처리가 필요하면 goroutine을 쓴다.
 
 ## init() 함수
 
-Node.js에는 없는 개념이다. `init`은 package가 로드될 때 자동으로 실행되는 특수 함수다.
+`init`은 package가 로드될 때 자동으로 실행되는 특수 함수다.
 
 ```go
 package main
@@ -315,7 +298,7 @@ main: loaded
 3. `init` 함수 실행
 4. `main` 함수 실행
 
-Node.js에서 비슷한 패턴을 찾자면 모듈의 top-level 코드다:
+비슷한 패턴으로 Node.js 모듈의 top-level 코드가 있다:
 
 ```javascript
 // Node.js: 모듈 로드 시 실행되는 top-level 코드
@@ -327,7 +310,7 @@ export function getConfig() {
 }
 ```
 
-차이점: Node.js의 top-level 코드는 모듈이 처음 `import`될 때 한 번 실행된다. Go의 `init`도 package가 처음 import될 때 한 번 실행된다. 동작은 비슷하지만, Go는 이를 별도의 함수 형태로 명확하게 분리했다.
+동작은 비슷하다. Node.js의 top-level 코드도 모듈이 처음 `import`될 때 한 번 실행된다. Go는 이를 별도의 함수 형태로 분리했다는 점이 다르다.
 
 `init`의 남용은 피해야 한다. 전역 상태를 암묵적으로 변경하면 테스트하기 어렵고 의존성을 추적하기 힘들다. 데이터베이스 드라이버 등록처럼 side effect가 필요한 경우에 주로 쓰인다:
 

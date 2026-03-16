@@ -1,23 +1,10 @@
 # HTTP 서버
 
-Node.js에서 `http.createServer`로 서버를 만들 듯, Go는 `net/http` 패키지로 HTTP 서버를 구축한다. Express 같은 프레임워크 없이 표준 라이브러리만으로 라우팅, 미들웨어, graceful shutdown까지 프로덕션 수준의 서버를 만들 수 있다. Go 1.22에서 `ServeMux`의 라우팅이 대폭 개선되면서 서드파티 라우터의 필요성이 더 줄었다.
+Go의 HTTP 서버는 `net/http` 패키지 하나로 완결된다. 라우팅, 미들웨어, graceful shutdown까지 표준 라이브러리에 포함되어 있어서 Express 같은 프레임워크가 필요 없다. Go 1.22에서 `ServeMux`의 라우팅이 대폭 개선되면서 서드파티 라우터의 필요성이 더 줄었다.
 
 ## 최소한의 서버
 
-Node.js의 가장 기본적인 HTTP 서버:
-
-```javascript
-const http = require("http");
-
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Hello, World!");
-});
-
-server.listen(8080);
-```
-
-Go로 동일한 서버를 만든다:
+Node.js의 `http.createServer`에 해당하는 가장 간단한 형태:
 
 ```go
 package main
@@ -37,7 +24,7 @@ func main() {
 
 `http.HandleFunc`은 경로와 핸들러 함수를 등록한다. `http.ListenAndServe`는 지정한 주소에서 요청을 받기 시작한다. 두 번째 인자 `nil`은 기본 `ServeMux`를 사용한다는 뜻이다.
 
-Node.js에서 callback의 인자가 `(req, res)`인 것처럼, Go 핸들러도 요청과 응답 두 인자를 받는다. 다만 순서가 반대다. Go는 `(w, r)` — 응답이 먼저, 요청이 나중이다.
+핸들러 함수의 인자 순서가 Node.js와 반대다. Go는 `(w, r)` — 응답이 먼저, 요청이 나중이다.
 
 ## Handler interface
 
@@ -106,19 +93,7 @@ mux.HandleFunc("GET /posts/{id}", getPost)
 http.ListenAndServe(":8080", mux)
 ```
 
-Express와 비교하면:
-
-```javascript
-const app = express();
-
-app.get("/posts", listPosts);
-app.post("/posts", createPost);
-app.get("/posts/:id", getPost);
-
-app.listen(8080);
-```
-
-패턴이 거의 동일하다. `"GET /posts"`처럼 HTTP 메서드를 패턴 앞에 붙이는 것이 Go 1.22에서 추가된 문법이다. 이전에는 핸들러 내부에서 `r.Method`를 직접 확인해야 했다.
+Express의 `app.get("/posts", handler)`와 거의 같은 패턴이다. `"GET /posts"`처럼 HTTP 메서드를 패턴 앞에 붙이는 것이 Go 1.22에서 추가된 문법이다. 이전에는 핸들러 내부에서 `r.Method`를 직접 확인해야 했다.
 
 ### 경로 파라미터
 
@@ -131,7 +106,7 @@ func getPost(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Express의 `req.params.id`에 해당하는 것이 `r.PathValue("id")`다. Go 1.22 이전에는 이 기능이 없어서 gorilla/mux나 chi 같은 서드파티 라우터가 사실상 필수였다.
+`r.PathValue("id")`로 값을 꺼낸다. Express의 `req.params.id`와 같다. Go 1.22 이전에는 이 기능이 없어서 gorilla/mux나 chi 같은 서드파티 라우터가 사실상 필수였다.
 
 `{path...}` 형태로 나머지 경로를 캡처할 수도 있다:
 
@@ -152,7 +127,7 @@ mux.HandleFunc("GET /posts/{id}", getPost)     // 구체적
 mux.HandleFunc("GET /posts/latest", getLatest)  // 더 구체적
 ```
 
-`/posts/latest` 요청은 `getLatest`가 처리한다. 리터럴 경로가 와일드카드보다 우선하기 때문이다. Express도 같은 규칙이지만, Express는 등록 순서에도 영향을 받는다. Go의 `ServeMux`는 등록 순서와 무관하게 구체성만으로 판단한다.
+`/posts/latest` 요청은 `getLatest`가 처리한다. 리터럴 경로가 와일드카드보다 우선하기 때문이다. Express와 달리 등록 순서에 영향을 받지 않고, 구체성만으로 판단한다.
 
 ## Request와 ResponseWriter
 
@@ -180,7 +155,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Node.js의 `req` 객체와 대응 관계:
+Express의 `req` 객체와 대응 관계:
 
 | Node.js | Go |
 |---|---|
@@ -216,7 +191,7 @@ func jsonHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-`WriteHeader`는 `Write`보다 먼저 호출해야 한다. `Write`를 먼저 호출하면 암묵적으로 `200 OK`가 전송된다. Node.js에서 `res.writeHead`를 `res.write`보다 먼저 호출해야 하는 것과 같다.
+`WriteHeader`는 `Write`보다 먼저 호출해야 한다. `Write`를 먼저 호출하면 암묵적으로 `200 OK`가 전송된다.
 
 ## JSON API 서버 예제
 
@@ -292,7 +267,7 @@ func main() {
 
 이 코드에서 주목할 점:
 
-1. `sync.Mutex`로 동시 접근을 보호한다. Go의 HTTP 서버는 각 요청을 별도 goroutine에서 처리하므로, 공유 상태가 있으면 동기화가 필요하다. Node.js는 싱글 스레드라서 이런 고려가 없다.
+1. `sync.Mutex`로 동시 접근을 보호한다. Go의 HTTP 서버는 각 요청을 별도 goroutine에서 처리하므로, 공유 상태가 있으면 동기화가 필요하다.
 2. `json.NewDecoder`와 `json.NewEncoder`가 `io.Reader`/`io.Writer`를 활용한다. `r.Body`에서 직접 디코딩하고, `w`에 직접 인코딩한다.
 3. `http.Error`는 에러 응답을 보내는 편의 함수다.
 
@@ -320,7 +295,7 @@ srv.ListenAndServe()
 | `WriteTimeout` | 응답을 작성하는 데 허용되는 시간 |
 | `IdleTimeout` | keep-alive 연결에서 다음 요청까지 대기 시간 |
 
-타임아웃을 설정하지 않으면 느린 클라이언트가 연결을 무한히 점유할 수 있다. Node.js에서도 `server.timeout`이나 `server.keepAliveTimeout`으로 같은 설정을 한다.
+타임아웃을 설정하지 않으면 느린 클라이언트가 연결을 무한히 점유할 수 있다.
 
 ## Graceful Shutdown
 
@@ -378,16 +353,6 @@ func main() {
 
 `srv.Shutdown`은 새로운 연결 수락을 중단하고, 진행 중인 요청이 완료될 때까지 기다린다. context의 타임아웃 내에 완료되지 않으면 강제 종료한다.
 
-Node.js에서 같은 패턴:
-
-```javascript
-process.on("SIGTERM", () => {
-  server.close(() => {
-    process.exit(0);
-  });
-});
-```
-
-Node.js의 `server.close`도 새 연결을 거부하고 기존 연결이 끝나길 기다린다. Go와 개념이 동일하다. 차이점은 Go가 context로 타임아웃을 명시적으로 제어한다는 것이다.
+Node.js의 `server.close`와 개념이 동일하지만, Go는 context로 타임아웃을 명시적으로 제어한다는 점이 다르다.
 
 `Handler` interface와 `io.Reader`/`io.Writer`의 조합은 Go 표준 라이브러리의 설계 철학 -- 작은 interface를 합성하여 큰 기능을 만드는 -- 이 HTTP 서버에서 실현된 결과다.

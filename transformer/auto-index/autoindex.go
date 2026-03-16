@@ -20,14 +20,8 @@ func titleFromDirName(name string) string {
 	if seriesPrefixRe.MatchString(name) {
 		name = name[3:]
 	}
-	// Convert kebab-case to Title Case
-	parts := strings.Split(name, "-")
-	for i, p := range parts {
-		if len(p) > 0 {
-			parts[i] = strings.ToUpper(p[:1]) + p[1:]
-		}
-	}
-	return strings.Join(parts, " ")
+	title := strings.ReplaceAll(name, "-", " ")
+	return strings.ToUpper(title[:1]) + title[1:]
 }
 
 // extractTitle tries to read a title from a subfolder's index.md using ExtractH1.

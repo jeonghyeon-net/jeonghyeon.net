@@ -1,6 +1,6 @@
 # JSON과 직렬화
 
-Node.js에서 `JSON.parse`와 `JSON.stringify`는 별다른 설정 없이 동작한다. JavaScript 객체 자체가 JSON과 거의 동일한 구조이기 때문이다. Go는 다르다. JSON 데이터를 다루려면 struct를 먼저 정의하고, struct tag로 필드 매핑을 지정해야 한다. 이 과정이 번거로워 보이지만, 컴파일 타임에 타입 안전성을 보장한다.
+Go에서 JSON 데이터를 다루려면 struct를 먼저 정의하고, struct tag로 필드 매핑을 지정해야 한다. `JSON.parse` 한 줄이면 끝나는 JavaScript와 비교하면 번거롭지만, 컴파일 타임에 타입 안전성을 보장한다.
 
 ## 기본: Marshal과 Unmarshal
 
@@ -40,20 +40,7 @@ func main() {
 }
 ```
 
-Node.js 대응:
-
-```javascript
-const user = { name: "Alice", email: "alice@example.com", age: 30 };
-
-// 직렬화
-const json = JSON.stringify(user);
-
-// 역직렬화
-const parsed = JSON.parse(json);
-console.log(parsed.name); // Alice
-```
-
-핵심적인 차이가 있다. Node.js에서 `JSON.parse`는 아무 JSON이나 바로 객체로 바꾸고, 존재하지 않는 필드에 접근하면 `undefined`를 반환한다. Go에서 `json.Unmarshal`은 struct에 정의된 필드만 채우고, 정의되지 않은 필드는 무시한다. JSON에 없는 필드는 해당 타입의 zero value가 된다.
+`json.Unmarshal`은 struct에 정의된 필드만 채우고, 정의되지 않은 필드는 무시한다. JSON에 없는 필드는 해당 타입의 zero value가 된다. `JSON.parse`가 아무 JSON이나 바로 객체로 바꾸는 것과 달리, 스키마가 강제된다.
 
 ## Struct tag
 
@@ -74,14 +61,7 @@ type Product struct {
 - `json:"-"` — JSON 직렬화에서 완전히 제외한다.
 - `json:"comment,omitempty"` — 값이 zero value이면 JSON 출력에서 생략한다.
 
-`omitempty`가 적용되는 zero value는 타입에 따라 다르다:
-
-| 타입 | zero value |
-|---|---|
-| `bool` | `false` |
-| `int`, `float64` 등 | `0` |
-| `string` | `""` |
-| pointer, slice, map | `nil` |
+`omitempty`가 적용되는 zero value는 03편에서 다룬 각 타입의 zero value(`bool`은 `false`, 숫자는 `0`, `string`은 `""`, pointer/slice/map은 `nil`)다.
 
 ```go
 p := Product{ID: 1, Name: "Widget", Price: 0}
@@ -92,16 +72,7 @@ fmt.Println(string(data))
 // Internal은 "-"이라 항상 제외
 ```
 
-Node.js에는 struct tag에 해당하는 개념이 없다. 필드 이름을 바꾸려면 새 객체를 만들어야 한다:
-
-```javascript
-// Go의 struct tag에 해당하는 작업을 수동으로
-const toJSON = (product) => ({
-  id: product.id,
-  name: product.name,
-  // internal 제외
-});
-```
+JavaScript에는 struct tag에 해당하는 개념이 없어서, 필드 이름을 바꾸거나 특정 필드를 제외하려면 변환 함수를 직접 작성해야 한다.
 
 ## JSON과 Go 타입 매핑
 
@@ -126,7 +97,7 @@ json.Unmarshal(raw, &m)
 fmt.Printf("%T\n", m["count"]) // float64 — int가 아니다
 ```
 
-이것은 JSON 명세 자체에 정수 타입이 없기 때문이다. Node.js도 동일한 문제가 있다. `JSON.parse('{"id": 9007199254740993}')`에서 큰 정수가 부동소수점 정밀도 문제로 변형된다.
+JSON 명세 자체에 정수 타입이 없기 때문이다. JavaScript에서도 `JSON.parse('{"id": 9007199254740993}')`에서 큰 정수가 부동소수점 정밀도 문제로 변형되는 것과 같은 근본 원인이다.
 
 ### 포인터 필드로 null과 부재 구분
 
@@ -178,7 +149,7 @@ if event, ok := m["event"].(string); ok {
 }
 ```
 
-Node.js에서는 `JSON.parse` 결과를 바로 동적으로 사용하므로 이런 불편함이 없다. 대신 존재하지 않는 필드에 접근해도 런타임 에러 없이 `undefined`가 되어 버그가 숨는다.
+JavaScript에서는 `JSON.parse` 결과를 바로 동적으로 접근할 수 있지만, 존재하지 않는 필드가 `undefined`로 조용히 넘어가서 버그가 숨는다. Go는 그 반대로 명시적이다.
 
 ### json.RawMessage — 지연 파싱
 
@@ -324,7 +295,7 @@ fmt.Println(string(data))
 // {"id":1,"status":"active"}
 ```
 
-Node.js에서 비슷한 역할을 하는 것이 `toJSON` 메서드다:
+JavaScript의 `toJSON` 메서드에 해당한다:
 
 ```javascript
 class Job {
@@ -338,7 +309,7 @@ class Job {
 }
 ```
 
-Go는 직렬화와 역직렬화를 모두 커스터마이즈할 수 있지만, Node.js의 `toJSON`은 직렬화만 커스터마이즈한다. `JSON.parse`의 두 번째 인자 reviver를 사용하면 역직렬화도 가능하지만, 타입별이 아니라 전체 파싱에 대해 적용된다.
+Go는 직렬화와 역직렬화를 모두 타입별로 커스터마이즈할 수 있다. `toJSON`은 직렬화만 가능하고, `JSON.parse`의 reviver는 전체 파싱에 대해 적용되므로 타입별 제어가 어렵다.
 
 ### 시간 포맷 커스터마이즈
 
@@ -403,4 +374,4 @@ json.Marshal(v)
 json.Unmarshal(data, &v)
 ```
 
-struct와 tag를 먼저 정의하는 것이 `JSON.parse` 한 줄에 비해 번거로워 보이지만, struct가 정의되면 그 이후의 코드는 타입 안전하고, IDE 자동완성이 동작하며, 잘못된 필드 접근은 컴파일 타임에 잡힌다.
+struct를 먼저 정의하는 비용은 있지만, 그 이후의 코드는 타입 안전하고, IDE 자동완성이 동작하며, 잘못된 필드 접근은 컴파일 타임에 잡힌다.

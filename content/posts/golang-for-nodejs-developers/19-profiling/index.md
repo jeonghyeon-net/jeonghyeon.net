@@ -1,12 +1,10 @@
 # 프로파일링
 
-성능 문제를 해결하려면 먼저 병목이 어디인지 알아야 한다. Node.js에서는 `node --prof`나 clinic.js로 프로파일링한다. Go는 pprof라는 프로파일링 도구가 런타임에 내장되어 있다. CPU, 메모리, goroutine 프로파일을 수집하고, flame graph로 시각화하고, `go tool trace`로 실행 흐름을 추적하는 방법을 다룬다.
+성능 문제를 해결하려면 먼저 병목이 어디인지 알아야 한다. Go는 pprof라는 프로파일링 도구가 런타임에 내장되어 있다. `node --prof`나 clinic.js처럼 별도 도구를 조합할 필요 없이, 표준 라이브러리만으로 CPU, 메모리, goroutine 프로파일 수집과 flame graph 시각화까지 완결된다.
 
 ## pprof 기본 개념
 
 pprof는 Go 런타임에 내장된 프로파일러다. 별도 설치가 필요 없다. 프로그램 실행 중 일정 간격으로 샘플을 수집하여 어떤 함수가 CPU 시간을 얼마나 쓰는지, 메모리를 얼마나 할당하는지 기록한다.
-
-Node.js에서는 V8 profiler가 내장되어 있지만 직접 사용하기보다 clinic.js 같은 래퍼를 쓰는 경우가 많다. Go는 표준 라이브러리만으로 프로파일링이 완결된다.
 
 수집 가능한 프로파일 종류:
 
@@ -21,7 +19,7 @@ Node.js에서는 V8 profiler가 내장되어 있지만 직접 사용하기보다
 
 ## 벤치마크에서 프로파일 수집
 
-가장 간단한 프로파일링 방법은 벤치마크와 연계하는 것이다. 16편에서 다뤘던 `testing.B`를 그대로 활용한다:
+가장 간단한 프로파일링 방법은 벤치마크와 연계하는 것이다. 16편의 `testing.B`를 그대로 활용한다:
 
 ```go
 // concat.go
@@ -134,7 +132,7 @@ ROUTINE ======================== concat.ConcatLoop
          .          .     11:}
 ```
 
-8번째 줄, `result += s`에서 거의 모든 시간이 소비된다. Node.js의 `--prof` 출력이 V8 내부 함수 이름으로 가득한 것과 달리, Go의 pprof는 소스 코드에 직접 매핑된다.
+8번째 줄, `result += s`에서 거의 모든 시간이 소비된다. `--prof` 출력이 V8 내부 함수 이름으로 가득한 것과 달리, pprof는 소스 코드에 직접 매핑된다.
 
 ### web — flame graph 시각화
 
@@ -161,7 +159,7 @@ flame graph는 call stack을 시각화한 것이다. 가로축은 시간 비율(
 3. **색상은 의미가 없다.** 구분용이다. 블록 너비만 본다.
 4. **좌우 순서도 의미가 없다.** 알파벳순 정렬일 뿐 호출 순서가 아니다.
 
-Node.js의 clinic.js flame graph와 동일한 개념이다. 차이점은 Go의 flame graph에 goroutine별 스택이 포함될 수 있다는 것이다.
+clinic.js의 flame graph와 동일한 개념이다. Go에서는 goroutine별 스택이 포함될 수 있다는 점이 다르다.
 
 ## 메모리 프로파일 분석
 
@@ -191,7 +189,7 @@ Showing nodes accounting for 4.88GB, 99.9% of 4.88GB total
 
 `ConcatLoop`이 총 4.88GB를 할당했다. 문자열을 반복 연결할 때마다 새 문자열을 할당하기 때문이다. `ConcatBuilder`는 내부 버퍼를 재사용하므로 할당이 훨씬 적다.
 
-Node.js에서 V8 heap snapshot을 Chrome DevTools에서 분석하는 것에 해당한다. V8 heap snapshot은 객체 그래프를 시각화하는 데 강하고, Go의 pprof는 함수별 할당량을 추적하는 데 강하다.
+V8 heap snapshot이 객체 그래프 시각화에 강하다면, pprof는 함수별 할당량 추적에 강하다.
 
 ## HTTP 서버에 pprof 엔드포인트 추가
 
@@ -287,7 +285,7 @@ func main() {
 }
 ```
 
-Node.js에서 `v8.writeHeapSnapshot()`으로 특정 시점의 힙 스냅샷을 저장하는 것과 비슷한 패턴이다.
+`v8.writeHeapSnapshot()`으로 특정 시점의 힙 스냅샷을 저장하는 것과 비슷한 패턴이다.
 
 ## go tool trace
 
@@ -318,7 +316,7 @@ $ go tool trace trace.out
 3. **GC 이벤트** — GC가 언제, 얼마나 오래 실행되는지
 4. **네트워크/시스템 콜 대기** — I/O 바운드 병목 식별
 
-Node.js의 clinic.js bubbleprof가 이벤트 루프와 비동기 작업의 관계를 시각화하는 것과 유사하다. Go의 trace는 goroutine과 프로세서 수준의 스케줄링을 시각화한다.
+clinic.js bubbleprof가 이벤트 루프와 비동기 작업의 관계를 시각화한다면, `go tool trace`는 goroutine과 프로세서 수준의 스케줄링을 시각화한다.
 
 pprof와 trace의 차이:
 
@@ -332,9 +330,7 @@ pprof와 trace의 차이:
 
 trace는 오버헤드가 크므로 프로덕션에서 장시간 수집하는 것은 권장하지 않는다. 짧은 구간(5~10초)만 수집한다.
 
-## Node.js 프로파일링과 비교
-
-Node.js와 Go의 프로파일링 도구를 대응시키면:
+## 도구 대응 관계
 
 | 작업 | Node.js | Go |
 |---|---|---|
@@ -346,6 +342,6 @@ Node.js와 Go의 프로파일링 도구를 대응시키면:
 | 서버 프로파일링 | `--inspect` + DevTools | `net/http/pprof` |
 | 벤치마크 연계 | 없음 (별도 조합) | `-cpuprofile`, `-memprofile` |
 
-가장 큰 차이는 통합도다. Node.js는 `node --prof`로 수집하고, `node --prof-process`로 변환하고, Chrome DevTools나 clinic.js로 시각화하는 식으로 여러 도구를 조합한다. Go는 `go tool pprof` 하나로 수집, 분석, 시각화를 모두 처리한다.
+가장 큰 차이는 통합도다. `node --prof`로 수집, `node --prof-process`로 변환, Chrome DevTools나 clinic.js로 시각화하는 식으로 여러 도구를 조합하는 반면, `go tool pprof` 하나로 수집, 분석, 시각화를 모두 처리한다.
 
 서버 애플리케이션에서는 `net/http/pprof`를 미리 넣어두고, 문제가 발생했을 때 프로파일을 수집한다. goroutine 스케줄링이나 GC 관련 문제는 `go tool trace`로 타임라인을 확인한다. 모두 표준 도구이므로 별도 설치가 필요 없다.

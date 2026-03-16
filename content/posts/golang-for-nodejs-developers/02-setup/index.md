@@ -1,6 +1,6 @@
 # 개발 환경 설정
 
-Go 설치부터 Hello, World 실행까지. Node.js 개발자가 익숙한 도구와 1:1로 매핑하며 빠르게 환경을 갖춘다.
+Go 설치부터 Hello, World 실행까지.
 
 ## Go 설치
 
@@ -15,7 +15,7 @@ go version
 
 ### 버전 관리
 
-Node.js에 `nvm`이 있다면 Go에는 여러 선택지가 있다. 대표적으로 두 가지:
+Go 버전을 관리하는 방법은 여러 가지다. `nvm`에 해당하는 도구로 대표적으로 두 가지가 있다:
 
 **go install 방식** -- 추가 도구 없이 Go 자체 기능으로 여러 버전을 관리한다:
 
@@ -36,7 +36,7 @@ goenv global 1.24.1
 
 ## 프로젝트 초기화: go mod init
 
-Node.js에서 새 프로젝트를 시작할 때 `npm init`을 실행하듯, Go에서는 `go mod init`을 실행한다.
+Go 프로젝트는 `go mod init`으로 시작한다. `npm init`에 해당한다.
 
 ```bash
 mkdir myapp && cd myapp
@@ -76,7 +76,7 @@ Go의 의존성 관리 역사를 간략히 알아둘 필요가 있다. 지금은
 **GOPATH 시대 (Go 1.0 ~ 1.10):**
 모든 Go 코드가 하나의 디렉토리(`$GOPATH/src`) 아래에 있어야 했다. 프로젝트를 원하는 위치에 둘 수 없었다. 의존성도 같은 디렉토리에 들어갔고, 버전 개념이 없었다. `go get`은 항상 최신 코드를 가져왔다.
 
-Node.js로 비유하면, 모든 프로젝트와 node_modules가 하나의 전역 디렉토리에 섞여 있고, `npm install`이 항상 latest를 설치하는 상황이다.
+모든 프로젝트와 node_modules가 하나의 전역 디렉토리에 섞여 있고, `npm install`이 항상 latest를 설치하는 상황과 같다.
 
 **모듈 모드 (Go 1.11~):**
 Go 1.11에서 모듈이 실험적으로 도입되었고, Go 1.16부터 기본값이 되었다. `go.mod`로 프로젝트별 의존성을 관리하고, semantic versioning을 지원하며, 프로젝트를 어느 디렉토리에든 둘 수 있게 되었다.
@@ -174,8 +174,6 @@ myapp/
   repository/
     user.go
 ```
-
-Node.js와 비교하면:
 
 | Node.js | Go |
 |---|---|

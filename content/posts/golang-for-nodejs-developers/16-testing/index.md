@@ -1,6 +1,6 @@
 # 테스트
 
-Node.js에서 테스트를 작성하려면 Jest, Mocha, Vitest 같은 프레임워크를 선택하고 설치해야 한다. Go는 테스트 도구가 언어에 내장되어 있다. `go test` 한 줄이면 된다. 별도의 프레임워크도, 설정 파일도, assert 라이브러리도 필요 없다. 테스트 파일 관례부터 fuzzing까지 Go의 테스트 시스템 전체를 다룬다.
+Go는 테스트 도구가 언어에 내장되어 있다. `go test` 한 줄이면 된다. Jest나 Vitest를 고르고 설정하는 과정이 없다. 프레임워크도, 설정 파일도, assert 라이브러리도 필요 없다. 테스트 파일 관례부터 fuzzing까지 Go의 테스트 시스템 전체를 다룬다.
 
 ## _test.go 파일 관례
 
@@ -12,7 +12,7 @@ math/
   calc_test.go     # 테스트 코드
 ```
 
-같은 패키지 안에 테스트 파일을 함께 둔다. Node.js처럼 `__tests__/` 디렉토리를 따로 만들 필요가 없다.
+같은 패키지 안에 테스트 파일을 함께 둔다. `__tests__/` 디렉토리를 따로 만들 필요가 없다.
 
 ## testing.T 기본
 
@@ -50,7 +50,7 @@ PASS
 ok      example.com/math    0.001s
 ```
 
-Jest의 `expect(x).toBe(y)`에 해당하는 것이 `if`와 `t.Errorf`다:
+`expect(x).toBe(y)` 대신 `if`와 `t.Errorf`를 쓴다:
 
 ```javascript
 // Jest
@@ -109,7 +109,7 @@ func TestAdd(t *testing.T) {
 }
 ```
 
-Jest의 `describe`/`it` 구조와 비교하면:
+`describe`/`it.each` 구조와 같은 역할이다:
 
 ```javascript
 // Jest
@@ -174,7 +174,7 @@ func TestUser(t *testing.T) {
 $ go test -run TestUser/Create
 ```
 
-Jest의 `describe` 중첩과 비슷한 역할이다. 하지만 Go에서는 깊은 중첩보다 평탄한 구조를 선호한다.
+`describe` 중첩과 비슷하지만, Go에서는 깊은 중첩보다 평탄한 구조를 선호한다.
 
 ## 테스트 헬퍼 — t.Helper()
 
@@ -227,7 +227,7 @@ $ go test -bench=. -benchmem
 BenchmarkAdd-8    1000000000    0.2500 ns/op    0 B/op    0 allocs/op
 ```
 
-Node.js에서 벤치마크를 하려면 `benchmark.js` 같은 외부 패키지를 설치해야 한다. Go는 표준 도구에 포함되어 있다.
+`benchmark.js` 같은 외부 패키지 없이 표준 도구만으로 벤치마크가 가능하다.
 
 ## Fuzzing
 
@@ -272,7 +272,7 @@ fuzz: elapsed: 3s, execs: 325017 (108336/sec), new interesting: 0
 
 크래시를 발견하면 `testdata/fuzz/` 디렉토리에 실패 입력을 저장한다. 이후 일반 `go test`에서도 이 입력이 자동으로 포함된다.
 
-Node.js에는 내장 fuzzer가 없다. `fast-check` 같은 property-based testing 라이브러리가 비슷한 역할을 한다.
+`fast-check` 같은 property-based testing 라이브러리와 비슷한 개념이지만, 별도 설치 없이 표준 도구에 내장되어 있다.
 
 ## testdata 디렉토리
 
@@ -324,7 +324,7 @@ $ go test -run TestAdd # 이름이 매칭되는 테스트만 실행
 $ go test -count=1     # 캐시 무시하고 강제 실행
 ```
 
-`go test ./...`는 프로젝트 전체를 테스트하는 관용적 명령이다. Node.js에서 `npm test`가 하는 역할과 같다.
+`go test ./...`는 프로젝트 전체를 테스트하는 관용적 명령이다. `npm test`와 같은 역할이다.
 
 `-race` 플래그는 race condition detector를 활성화한다. 14편에서 다뤘던 동시성 버그를 테스트 단계에서 잡을 수 있다:
 

@@ -1,6 +1,6 @@
 # 로깅
 
-Node.js에서 로깅은 `console.log`로 시작해서 pino나 winston 같은 구조화 로깅 라이브러리로 넘어가는 경로를 밟는다. Go도 비슷하다. `log` 패키지로 시작해서 Go 1.21부터 표준 라이브러리에 포함된 `log/slog`로 넘어간다. 차이점은 Go에서는 구조화 로깅이 서드파티가 아니라 표준이라는 것이다.
+Go의 로깅은 `log` 패키지로 시작해서 Go 1.21부터 표준 라이브러리에 포함된 `log/slog`로 넘어간다. pino나 winston 같은 서드파티를 고를 필요 없이 구조화 로깅이 표준에 있다.
 
 ## log 패키지 — 기본 로깅
 
@@ -26,14 +26,7 @@ func main() {
 
 `log.Println`은 타임스탬프를 자동으로 붙인다. `fmt.Println`과의 차이가 이것이다. `fmt`는 순수 출력이고, `log`는 타임스탬프 + stderr 출력이다.
 
-Node.js 대응:
-
-```javascript
-console.log("server started");
-console.log(`listening on port ${8080}`);
-```
-
-`console.log`는 타임스탬프를 붙이지 않는다. 프로덕션에서 타임스탬프가 필요하면 pino 같은 라이브러리를 쓰거나 런타임 환경(Docker, CloudWatch)이 대신 붙여준다.
+`console.log`와 비슷하지만, 타임스탬프를 자동으로 붙이고 stderr로 출력한다는 점이 다르다.
 
 ### log.Fatal과 log.Panic
 
@@ -72,7 +65,7 @@ func main() {
 
 ## log/slog — 구조화 로깅
 
-Go 1.21에서 `log/slog` 패키지가 표준 라이브러리에 추가되었다. Node.js 생태계에서 pino가 하는 역할을 Go 표준이 담당한다.
+Go 1.21에서 `log/slog` 패키지가 표준 라이브러리에 추가되었다. pino와 같은 역할을 서드파티 없이 수행한다.
 
 ```go
 package main
@@ -92,16 +85,7 @@ func main() {
 
 `slog.Info`의 첫 번째 인자는 메시지, 나머지는 key-value 쌍이다. 이것이 구조화 로깅의 핵심이다. 메시지와 데이터가 분리되어 있어 로그 수집 시스템에서 파싱하기 쉽다.
 
-Node.js pino 대응:
-
-```javascript
-const pino = require("pino");
-const logger = pino();
-
-logger.info({ port: 8080, env: "production" }, "server started");
-```
-
-pino는 key-value를 객체로, slog는 가변 인자로 전달한다. 형태는 다르지만 구조화 로깅이라는 개념은 동일하다.
+pino에서 key-value를 객체로 전달하는 것과 같은 개념이다. slog는 가변 인자로 전달한다는 점만 다르다.
 
 ## 로그 레벨
 
@@ -122,13 +106,6 @@ handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 })
 logger := slog.New(handler)
 logger.Debug("this is now visible")
-```
-
-Node.js pino도 동일한 레벨 체계를 가진다:
-
-```javascript
-const logger = pino({ level: "debug" });
-logger.debug("this is now visible");
 ```
 
 ### 런타임 레벨 변경
@@ -188,11 +165,11 @@ logger.Info("user login", "user_id", 42, "ip", "192.168.1.1")
 
 JSON 형식이다. 로그 수집 시스템(Datadog, Elasticsearch, CloudWatch)이 파싱하기 좋다. 프로덕션 환경에 적합하다.
 
-Node.js pino는 기본 출력이 JSON이고, 개발 환경에서 사람이 읽기 쉬운 형식으로 바꾸려면 `pino-pretty`를 파이프한다. Go slog는 반대로 기본이 텍스트이고, 프로덕션에서 JSONHandler로 전환한다.
+pino의 기본 출력이 JSON인 것과 반대로, slog는 기본이 텍스트이고 프로덕션에서 JSONHandler로 전환하는 방향이다.
 
 ## slog.With — child logger
 
-pino에서 `child()`로 기본 필드를 추가한 로거를 만드는 것처럼, slog에서는 `With()`를 사용한다:
+pino의 `child()`처럼 기본 필드를 추가한 로거를 만들 때 `With()`를 사용한다:
 
 ```go
 logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -210,13 +187,7 @@ reqLogger.Info("request completed", "status", 200)
 {"time":"...","level":"INFO","msg":"request completed","request_id":"abc-123","method":"POST","status":200}
 ```
 
-`With()`는 새 Logger를 반환한다. 원본은 변경되지 않는다. pino의 child logger와 동일한 패턴이다:
-
-```javascript
-const reqLogger = logger.child({ requestId: "abc-123", method: "POST" });
-reqLogger.info({ path: "/api/users" }, "processing request");
-reqLogger.info({ status: 200 }, "request completed");
-```
+`With()`는 새 Logger를 반환한다. 원본은 변경되지 않는다.
 
 ### slog.Group — 필드 그룹화
 
@@ -336,18 +307,7 @@ func processOrder(ctx context.Context, orderID string) (string, error) {
 
 `processOrder`는 로거를 인자로 받지 않지만, context에서 꺼내면 request_id, method, path가 이미 포함된 로거를 사용할 수 있다. 모든 로그가 동일한 request_id를 가지므로 요청 단위로 로그를 추적할 수 있다.
 
-이 패턴은 pino의 child logger를 req 객체에 붙이는 것과 유사하다:
-
-```javascript
-app.use((req, res, next) => {
-  req.log = logger.child({ requestId: req.headers["x-request-id"] });
-  next();
-});
-
-app.get("/orders/:id", (req, res) => {
-  req.log.info("handling request");
-});
-```
+pino의 child logger를 `req` 객체에 붙이는 것과 같은 패턴이다. Go에서는 context가 그 역할을 한다.
 
 ## 커스텀 Handler 작성
 
@@ -440,4 +400,4 @@ func main() {
 
 실제 프로덕션에서는 직접 Handler를 작성하기보다 기존 Handler를 래핑하는 방식이 더 일반적이다. 기본 JSONHandler로 충분하고, 출력 대상만 바꾸면 되는 경우가 대부분이다.
 
-`log/slog`는 pino나 winston을 고르고, 설정을 맞추고, transport를 구성하는 과정을 `slog.NewJSONHandler` 한 줄로 대체한다. 서드파티 의존성 없이 프로덕션 수준의 구조화 로깅을 바로 시작할 수 있다.
+라이브러리를 고르고, 설정을 맞추고, transport를 구성하는 과정이 `slog.NewJSONHandler` 한 줄로 대체된다. 서드파티 의존성 없이 프로덕션 수준의 구조화 로깅을 바로 시작할 수 있다.

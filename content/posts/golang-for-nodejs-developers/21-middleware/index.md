@@ -1,23 +1,10 @@
 # 미들웨어와 요청 처리
 
-20편에서 미들웨어의 기본 형태를 소개했다. `func(http.Handler) http.Handler` — Handler를 받아서 Handler를 반환하는 함수. 이 단순한 시그니처로 로깅, 인증, CORS, panic recovery까지 구현할 수 있다. Express의 `app.use(middleware)`와 같은 역할이지만, 동작 방식은 근본적으로 다르다.
+Go 미들웨어의 시그니처는 `func(http.Handler) http.Handler` — Handler를 받아서 Handler를 반환하는 함수다. 이 단순한 형태로 로깅, 인증, CORS, panic recovery까지 구현할 수 있다.
 
-## Express 미들웨어 vs Go 미들웨어
+## 기본 구조
 
-Express 미들웨어는 `next` callback으로 제어를 넘긴다:
-
-```javascript
-function logging(req, res, next) {
-  console.log(`${req.method} ${req.url}`);
-  next();
-  // next() 이후 코드도 실행된다
-  console.log("응답 완료");
-}
-
-app.use(logging);
-```
-
-Go 미들웨어는 Handler를 감싸는 함수 합성이다:
+Express 미들웨어가 `next` callback으로 제어를 넘기는 것과 달리, Go 미들웨어는 Handler를 감싸는 함수 합성이다:
 
 ```go
 func logging(next http.Handler) http.Handler {
@@ -30,7 +17,7 @@ func logging(next http.Handler) http.Handler {
 }
 ```
 
-핵심 차이는 제어 흐름의 명시성이다. Express의 `next()`는 callback이므로 호출 시점이 자유롭다. 비동기 작업 후에 호출하거나, 아예 호출하지 않을 수 있다. Go의 `next.ServeHTTP(w, r)`은 일반 함수 호출이다. 호출하면 다음 핸들러가 실행되고, 반환되면 실행이 끝난 것이다. callback chain이 아닌 call stack이다.
+`next.ServeHTTP(w, r)`은 일반 함수 호출이다. 호출하면 다음 핸들러가 실행되고, 반환되면 실행이 끝난 것이다. Express의 `next()`가 callback chain인 것과 달리, Go 미들웨어는 call stack이다.
 
 ## 실행 순서
 
@@ -70,7 +57,7 @@ second: 응답 완료
 first: 응답 완료
 ```
 
-함수 호출이 중첩되므로 요청은 바깥에서 안으로, 응답은 안에서 바깥으로 흐른다. `first`가 `second`를 감싸고, `second`가 실제 핸들러를 감싼다. 이 구조는 Express의 미들웨어 스택과 결과는 같지만, Express는 `next()` callback을 통한 순차 실행이고 Go는 함수 호출의 중첩이다.
+함수 호출이 중첩되므로 요청은 바깥에서 안으로, 응답은 안에서 바깥으로 흐른다. `first`가 `second`를 감싸고, `second`가 실제 핸들러를 감싼다.
 
 `chain` 함수를 만들면 읽기 순서와 실행 순서가 일치한다:
 
@@ -122,7 +109,7 @@ func logging(next http.Handler) http.Handler {
 }
 ```
 
-Express에서 같은 일을 하려면 `morgan` 같은 라이브러리를 쓰거나 `res.on('finish', ...)`로 응답 완료 이벤트를 잡아야 한다. Go에서는 `next.ServeHTTP` 호출이 동기적이므로, 그 이후에 바로 처리 시간을 계산하면 된다.
+`next.ServeHTTP` 호출이 동기적이므로, 그 이후에 바로 처리 시간을 계산하면 된다. Express에서는 `res.on('finish', ...)`로 응답 완료 이벤트를 잡아야 하는 것과 대조적이다.
 
 ## 인증 미들웨어
 
@@ -150,11 +137,11 @@ func auth(next http.Handler) http.Handler {
 }
 ```
 
-Express에서 `next()`를 호출하지 않으면 요청이 거기서 멈추는 것처럼, Go에서는 `next.ServeHTTP`를 호출하지 않고 `return`하면 된다. 차이는 명확하다 — Express는 `next()`를 빠뜨리면 실수인지 의도인지 구분하기 어렵지만, Go는 `return`으로 의도를 명시한다.
+`next.ServeHTTP`를 호출하지 않고 `return`하면 요청이 거기서 멈춘다. Express의 `next()` 생략과 달리, `return`으로 의도가 명시적이다.
 
 ### context로 값 전달
 
-Express에서 `req.user = decoded`처럼 요청 객체에 값을 직접 넣는 패턴이 흔하다. Go에서는 `context.WithValue`를 사용한다:
+Express의 `req.user = decoded`처럼 요청에 값을 붙이려면 `context.WithValue`를 사용한다:
 
 ```go
 // key 타입 정의 — 패키지 간 충돌 방지
@@ -168,7 +155,7 @@ r = r.WithContext(ctx)
 userID, ok := r.Context().Value(userIDKey{}).(string)
 ```
 
-key에 빈 struct를 쓰는 이유는 타입 자체가 고유한 식별자가 되기 때문이다. 문자열 key를 쓰면 서로 다른 패키지에서 같은 문자열을 사용했을 때 충돌한다. Express의 `req.user`도 다른 미들웨어가 같은 속성명을 쓰면 덮어쓰는 문제가 있다. Go의 방식이 더 안전하다.
+key에 빈 struct를 쓰는 이유는 타입 자체가 고유한 식별자가 되기 때문이다. 문자열 key를 쓰면 서로 다른 패키지에서 같은 문자열을 사용했을 때 충돌한다. Express의 `req.user`에서 다른 미들웨어가 같은 속성명을 덮어쓰는 문제를 타입 시스템으로 방지한다.
 
 ## CORS 미들웨어
 
@@ -191,7 +178,7 @@ func cors(next http.Handler) http.Handler {
 }
 ```
 
-Express에서 `cors` 패키지가 하는 일과 동일하다. preflight 요청은 헤더만 설정하고 `204 No Content`로 응답한 뒤, 핸들러를 호출하지 않고 끝낸다.
+preflight 요청은 헤더만 설정하고 `204 No Content`로 응답한 뒤, 핸들러를 호출하지 않고 끝낸다.
 
 ## Recovery 미들웨어
 
@@ -214,16 +201,7 @@ func recovery(next http.Handler) http.Handler {
 
 `defer`와 `recover`의 조합이다. 10편에서 다뤘듯 `recover`는 `defer` 내부에서만 동작한다. `next.ServeHTTP` 실행 중 panic이 발생하면 `defer` 함수가 실행되고, `recover`가 panic 값을 잡는다. `debug.Stack()`으로 스택 트레이스도 기록한다.
 
-Express에서 같은 역할을 하는 에러 핸들러:
-
-```javascript
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send("internal server error");
-});
-```
-
-Express의 에러 핸들러는 인자가 4개인 미들웨어로 구분한다. Go는 `defer`/`recover`라는 언어 수준의 메커니즘을 사용한다.
+Express에서는 인자가 4개인 미들웨어(`(err, req, res, next)`)로 에러를 처리한다. Go는 `defer`/`recover`라는 언어 수준의 메커니즘을 사용한다.
 
 ## 미들웨어 조합
 
@@ -254,18 +232,7 @@ func main() {
 1. **전역 미들웨어** — `chain`으로 모든 요청에 적용. recovery, logging, CORS.
 2. **라우트별 미들웨어** — `auth(handler)` 형태로 특정 핸들러에만 적용.
 
-Express에서도 같은 구분이 있다:
-
-```javascript
-// 전역
-app.use(morgan("dev"));
-app.use(corsMiddleware());
-
-// 라우트별
-app.get("/me", authMiddleware, handleMe);
-```
-
-Go에서 라우트별 미들웨어가 `mux.Handle`을 사용하는 것에 주의한다. `mux.HandleFunc`은 함수를 받지만, 미들웨어가 반환하는 것은 `http.Handler`이므로 `mux.Handle`을 써야 한다.
+Express의 `app.use()`(전역)와 `app.get('/me', authMiddleware, handler)`(라우트별) 구분과 같다. Go에서 라우트별 미들웨어가 `mux.Handle`을 사용하는 것에 주의한다. `mux.HandleFunc`은 함수를 받지만, 미들웨어가 반환하는 것은 `http.Handler`이므로 `mux.Handle`을 써야 한다.
 
 ## 요청 lifecycle 정리
 
@@ -305,4 +272,4 @@ c := cors.New(cors.Options{
 handler := c.Handler(mux)
 ```
 
-chi, gorilla, alice 등 대부분의 라우터와 미들웨어 라이브러리가 `http.Handler`를 기반으로 동작한다. Express 생태계에서 미들웨어마다 `(req, res, next)` 시그니처를 따르는 것과 같은 관례다. 다만 Go는 이것이 표준 라이브러리의 interface에서 비롯된 것이므로 호환성이 더 강하다.
+chi, gorilla, alice 등 대부분의 라우터와 미들웨어 라이브러리가 `http.Handler`를 기반으로 동작한다. 표준 라이브러리의 interface에서 비롯된 관례이므로 서드파티 간 호환성이 높다.

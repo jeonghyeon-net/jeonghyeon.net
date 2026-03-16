@@ -1,10 +1,10 @@
 # 타입과 변수
 
-Go의 기본 타입과 변수 선언 방식을 살펴본다. TypeScript에 익숙한 개발자가 Go 타입 시스템으로 전환할 때 필요한 멘탈 모델의 차이에 집중한다.
+Go의 기본 타입과 변수 선언 방식. TypeScript와 멘탈 모델이 다른 부분을 중심으로 정리한다.
 
 ## 변수 선언
 
-Node.js에는 `var`, `let`, `const` 세 가지 변수 선언 키워드가 있다. Go에는 `var`와 `:=` 두 가지가 있다.
+Go의 변수 선언 키워드는 `var`와 `:=` 두 가지다.
 
 ```go
 // var 키워드: 타입을 명시하거나 초기값으로 추론
@@ -27,7 +27,7 @@ func main() {
 }
 ```
 
-Node.js와 매핑하면:
+JavaScript 키워드와의 대응:
 
 | Node.js | Go | 비고 |
 |---|---|---|
@@ -49,11 +49,9 @@ var (
 
 ## 기본 타입
 
-Go의 기본 타입은 TypeScript보다 세분화되어 있다.
-
 ### 숫자
 
-TypeScript에는 `number` 하나뿐이다. 정수든 소수든 전부 64-bit floating point(IEEE 754)다. Go는 정수와 부동소수점을 구분하고, 크기별로 타입이 나뉜다.
+TypeScript의 `number`는 정수든 소수든 전부 64-bit floating point(IEEE 754)다. Go는 정수와 부동소수점을 구분하고, 크기별로 타입이 나뉜다.
 
 ```go
 var i int     = 42      // 플랫폼에 따라 32 또는 64-bit
@@ -180,7 +178,7 @@ let y = null;    // null
 console.log(x);  // undefined
 ```
 
-JavaScript에는 `undefined`와 `null`이라는 두 가지 "없음"이 있다. TypeScript의 `strictNullChecks`를 켜면 `null`과 `undefined`를 명시적으로 처리해야 하므로 상황이 나아지지만, 이는 컴파일 타임 검사일 뿐이고 런타임에는 여전히 `null`/`undefined`가 존재한다.
+JavaScript에는 `undefined`와 `null`이라는 두 가지 "없음"이 있다. `strictNullChecks`를 켜면 상황이 나아지지만, 컴파일 타임 검사일 뿐이고 런타임에는 여전히 `null`/`undefined`가 존재한다.
 
 Go에는 `undefined`가 없다. 선언된 변수는 항상 유효한 값을 가진다. `int`의 zero value는 `0`이지 "값이 없음"이 아니다.
 
@@ -203,7 +201,7 @@ fmt.Println(cfg.Timeout) // 0
 
 ## 타입 변환
 
-JavaScript는 암묵적 형변환(implicit coercion)이 만연하다:
+JavaScript의 암묵적 형변환(implicit coercion):
 
 ```javascript
 // JavaScript
@@ -242,7 +240,7 @@ fmt.Println(string(42))       // "*" (Unicode code point 42)
 
 ## 상수
 
-Go의 `const`는 JavaScript의 `const`와 다르다. JavaScript의 `const`는 "재대입 불가"일 뿐 값 자체가 불변이 아닌 경우도 있다(객체의 속성은 변경 가능). Go의 `const`는 컴파일 타임에 값이 확정되는 진짜 상수다.
+JavaScript의 `const`는 "재대입 불가"일 뿐 값 자체가 불변이 아닌 경우도 있다(객체의 속성은 변경 가능). Go의 `const`는 컴파일 타임에 값이 확정되는 진짜 상수다.
 
 ```go
 const pi = 3.14159
@@ -332,15 +330,7 @@ var f Fahrenheit = Fahrenheit(c) // 명시적 변환 필요
 
 ## typeof가 없는 세상
 
-JavaScript에서 `typeof`는 런타임에 타입을 확인하는 기본 도구다:
-
-```javascript
-typeof 42         // "number"
-typeof "hello"    // "string"
-typeof undefined  // "undefined"
-```
-
-Go에서는 `typeof` 연산자가 없다. 모든 변수의 타입이 컴파일 타임에 확정되므로 런타임에 확인할 필요가 없다.
+Go에는 `typeof` 연산자가 없다. 모든 변수의 타입이 컴파일 타임에 확정되므로 런타임에 확인할 필요가 없다.
 
 디버깅 목적으로 타입을 출력하고 싶다면 `fmt.Printf`의 `%T` verb를 쓴다:
 
@@ -357,4 +347,4 @@ fmt.Printf("%T\n", s) // string
 
 `%T`는 디버깅용이다. 프로덕션 코드에서 타입에 따라 분기해야 한다면 type switch를 쓴다.
 
-Go의 타입 시스템은 TypeScript보다 표현력이 낮지만 명확하다. 암묵적으로 일어나는 것이 없고, 컴파일러가 강제하는 것이 많다.
+TypeScript보다 표현력이 낮지만 명확하다. 암묵적으로 일어나는 것이 없고, 컴파일러가 강제하는 것이 많다.

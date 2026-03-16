@@ -1,6 +1,6 @@
 # Goroutine과 Channel
 
-Go의 동시성은 Node.js의 이벤트 루프와 근본적으로 다르다. `go` 키워드 하나로 경량 스레드를 만들고, channel로 스레드 간 데이터를 주고받는다. callback도 Promise도 async/await도 없다. 1978년 Tony Hoare의 CSP 이론에서 출발한 이 모델은 "메모리를 공유하지 말고, 통신으로 메모리를 공유하라"는 철학 위에 서 있다.
+`go` 키워드 하나로 경량 스레드를 만들고, channel로 스레드 간 데이터를 주고받는다. callback도 Promise도 async/await도 없다. 1978년 Tony Hoare의 CSP 이론에서 출발한 이 모델은 "메모리를 공유하지 말고, 통신으로 메모리를 공유하라"는 철학 위에 서 있다.
 
 ## 세 편의 논문과 한 편의 강연
 
@@ -65,7 +65,7 @@ func main() {
 
 goroutine 10만 개를 동시에 실행해도 문제없다. 메모리 사용량은 수백 MB 수준이다. OS 스레드 10만 개는 대부분의 시스템에서 불가능하다.
 
-Node.js에서 비슷한 동시성을 달성하려면:
+같은 작업을 Node.js로 하면:
 
 ```javascript
 // Node.js
@@ -282,7 +282,7 @@ func main() {
 }
 ```
 
-Node.js에서 비슷한 패턴:
+Node.js에서는 `Promise.race`로 비슷하게 구현한다:
 
 ```javascript
 // Node.js
@@ -401,11 +401,7 @@ deadlock을 피하는 일반적인 전략:
 3. **buffered channel을 사용한다**: 블로킹 가능성을 줄인다
 4. **context로 취소한다**: 무한 대기를 방지
 
-## 이벤트 루프 vs M:N 스케줄링
-
-Node.js와 Go의 동시성 모델은 근본적으로 다르다. 이 차이를 이해하면 두 언어에서 동시성 코드를 작성하는 방식이 왜 다른지 명확해진다.
-
-### Node.js: 싱글 스레드 이벤트 루프
+## M:N 스케줄링
 
 Node.js는 하나의 스레드에서 JavaScript 코드를 실행한다. I/O 작업(파일 읽기, 네트워크 요청 등)은 libuv가 백그라운드에서 처리하고, 완료되면 콜백을 이벤트 큐에 넣는다. 이벤트 루프가 큐에서 콜백을 꺼내서 실행한다:
 
@@ -444,9 +440,7 @@ app.get("/health", (req, res) => {
 
 `worker_threads`로 우회할 수 있지만, 데이터 전달이 `postMessage`/`onmessage` 패턴이라 복잡도가 급격히 올라간다.
 
-### Go: M:N 스케줄링
-
-Go 런타임은 GMP 모델이라 불리는 M:N 스케줄러를 내장하고 있다:
+Go 런타임은 이와 달리 GMP 모델이라 불리는 M:N 스케줄러를 내장하고 있다:
 
 - **G** (Goroutine): 실행할 작업. 경량 스레드.
 - **M** (Machine): OS 스레드. 실제로 코드를 실행하는 주체.
@@ -492,7 +486,7 @@ func main() {
 
 `/fib`가 수 초 걸려도 `/health`는 즉시 응답한다. 각 HTTP 요청이 별도의 goroutine에서 처리되고, Go 런타임이 이들을 여러 OS 스레드에 분배하기 때문이다.
 
-### 핵심 차이 정리
+### 정리
 
 | | Node.js | Go |
 |---|---|---|
@@ -504,6 +498,4 @@ func main() {
 | 동기화 도구 | 불필요 | channel, sync.Mutex 등 |
 | 비동기 문법 | async/await, Promise | `go` 키워드, channel |
 
-Node.js의 모델은 "복잡한 동시성을 단순한 싱글 스레드로 감춘다." 대부분의 웹 I/O 작업에서 이 전략은 효과적이다. 하지만 CPU-bound 작업이나 실제 병렬 처리가 필요한 순간 한계에 부딪힌다.
-
-Go의 모델은 "동시성을 언어의 기본 요소로 제공한다." goroutine과 channel이 변수나 함수만큼 자연스러운 도구다. 대신 race condition이라는 새로운 종류의 버그를 다뤄야 한다. `go run -race`로 race condition을 감지할 수 있다.
+싱글 스레드 이벤트 루프는 복잡한 동시성을 단순하게 감추는 전략이다. 대부분의 웹 I/O 작업에서 효과적이지만, CPU-bound 작업이나 실제 병렬 처리가 필요한 순간 한계에 부딪힌다. Go는 동시성을 언어의 기본 요소로 제공한다. goroutine과 channel이 변수나 함수만큼 자연스러운 도구다. 대신 race condition이라는 새로운 종류의 버그를 다뤄야 한다. `go run -race`로 race condition을 감지할 수 있다.

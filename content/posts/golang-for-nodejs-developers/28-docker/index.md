@@ -1,10 +1,10 @@
 # Docker
 
-Go 바이너리는 외부 런타임 의존성이 없다. 이 특성이 Docker와 만나면 극단적으로 작은 이미지를 만들 수 있다. Node.js에서는 `node:alpine` 위에 `node_modules`를 올려야 했다면, Go에서는 빈 이미지 위에 바이너리 하나만 놓으면 된다.
+Go 바이너리는 외부 런타임 의존성이 없다. 이 특성이 Docker와 만나면 극단적으로 작은 이미지를 만들 수 있다. `node:alpine` 위에 `node_modules`를 올리는 대신, 빈 이미지 위에 바이너리 하나만 놓으면 된다.
 
-## Node.js의 Dockerfile
+## 전형적인 Node.js Dockerfile과의 차이
 
-전형적인 Node.js 애플리케이션의 Dockerfile이다:
+먼저 익숙한 Node.js Dockerfile을 보자:
 
 ```dockerfile
 FROM node:22-alpine
@@ -130,7 +130,7 @@ ENTRYPOINT ["/app"]
 - `ARG VERSION`으로 빌드 시 버전을 주입한다. `docker build --build-arg VERSION=1.2.3 .`으로 전달한다.
 - `USER nonroot:nonroot`로 비루트 사용자로 실행한다. distroless 이미지에 이 사용자가 미리 정의되어 있다.
 
-Node.js에서 레이어 캐싱을 위해 `package.json`을 먼저 복사하고 `npm ci`를 실행하는 것과 같은 패턴이다. 차이점은 `node_modules`의 크기가 수백 MB인 반면, Go 모듈 캐시는 빌드 단계에만 존재하고 최종 이미지에 포함되지 않는다는 것이다.
+`package.json`을 먼저 복사하고 `npm ci`를 실행하는 레이어 캐싱 패턴과 동일하다. 다만 Go 모듈 캐시는 빌드 단계에만 존재하고 최종 이미지에 포함되지 않는다.
 
 ## docker compose로 DB와 함께 실행
 
@@ -174,7 +174,7 @@ volumes:
 
 `depends_on`의 `condition: service_healthy`는 PostgreSQL이 실제로 연결을 받을 준비가 될 때까지 앱 시작을 지연한다. `depends_on`만 쓰면 컨테이너가 시작된 것만 확인하고, DB가 실제로 준비되었는지는 보장하지 않는다.
 
-Node.js 프로젝트에서도 같은 패턴을 쓰지만, 차이점은 빌드 시간이다. Go 이미지는 빌드 후 크기가 작으므로 `docker compose up --build`의 반복 사이클이 빠르다.
+Go 이미지는 빌드 후 크기가 작으므로 `docker compose up --build`의 반복 사이클이 빠르다.
 
 ## health check
 

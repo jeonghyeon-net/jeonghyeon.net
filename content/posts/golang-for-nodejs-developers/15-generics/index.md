@@ -1,10 +1,10 @@
 # 제네릭
 
-Go 1.18 이전까지 "같은 로직인데 타입만 다른 함수를 여러 벌 작성해야 하는" 문제는 Go 개발자의 오랜 고통이었다. 2022년 Go 1.18에서 제네릭이 추가되면서 이 문제가 해결되었다. Go 역사상 가장 많은 요청을 받은 기능이다. TypeScript 개발자에게 제네릭 문법 자체는 낯설지 않지만, 두 언어의 제네릭은 근본적으로 다른 방식으로 동작한다.
+Go 1.18 이전까지 "같은 로직인데 타입만 다른 함수를 여러 벌 작성해야 하는" 문제는 Go 개발자의 오랜 고통이었다. 2022년 Go 1.18에서 제네릭이 추가되면서 이 문제가 해결되었다. Go 역사상 가장 많은 요청을 받은 기능이다.
 
 ## 제네릭 이전 — interface{}의 시대
 
-08편에서 다룬 `any`(= `interface{}`)는 모든 타입을 받을 수 있다. 제네릭이 없던 시절에는 이것이 타입을 추상화하는 유일한 방법이었다:
+08편의 `any`(= `interface{}`)는 모든 타입을 받을 수 있다. 제네릭이 없던 시절에는 이것이 타입을 추상화하는 유일한 방법이었다:
 
 ```go
 // 제네릭 이전: 슬라이스에서 값을 찾는 함수
@@ -76,15 +76,6 @@ func main() {
 `[T comparable]`이 타입 파라미터 선언이다. `T`는 타입 변수이고, `comparable`은 `T`가 만족해야 하는 제약 조건(constraint)이다. `==` 연산이 가능한 타입만 허용한다는 뜻이다.
 
 호출할 때 `Contains[int]([]int{1, 2, 3}, 2)`처럼 타입을 명시할 수도 있지만, 컴파일러가 인자에서 타입을 추론하므로 대부분 생략한다.
-
-TypeScript와 문법을 비교하면:
-
-```typescript
-// TypeScript
-function contains<T>(slice: T[], target: T): boolean {
-  return slice.includes(target);
-}
-```
 
 TypeScript는 `<T>`, Go는 `[T constraint]`. 꺾쇠 대신 대괄호를 쓰는 이유는 Go 파서에서 `<`가 비교 연산자와 충돌하기 때문이다.
 
@@ -209,24 +200,9 @@ func main() {
 }
 ```
 
-`Stack[int]`로 인스턴스화하면 `int` 전용 스택이 된다. `Stack[string]`은 `string` 전용이다. 제네릭 이전에는 `interface{}`를 담는 스택을 만들고 꺼낼 때마다 type assertion을 해야 했다.
+`Stack[int]`로 인스턴스화하면 `int` 전용 스택이 된다. `Stack[string]`은 `string` 전용이다. 제네릭 이전에는 `interface{}`를 담는 스택을 만들고 꺼낼 때마다 type assertion(08편)을 해야 했다.
 
-TypeScript와 비교하면:
-
-```typescript
-// TypeScript
-class Stack<T> {
-  private items: T[] = [];
-  push(v: T) { this.items.push(v); }
-  pop(): T | undefined { return this.items.pop(); }
-}
-
-const s = new Stack<number>();
-```
-
-문법적 유사성이 높다. 하지만 동작 방식은 근본적으로 다르다.
-
-## TypeScript vs Go — 제네릭의 근본적 차이
+## type erasure vs monomorphization
 
 TypeScript의 제네릭은 컴파일 과정에서 완전히 지워진다(type erasure). 런타임에는 타입 파라미터 정보가 남지 않는다:
 
@@ -241,7 +217,7 @@ function identity(v) { return v; }
 
 Go의 제네릭은 컴파일 타임에 구체적인 타입으로 특수화(monomorphization)된다. `Contains[int]`와 `Contains[string]`은 내부적으로 별도의 함수 코드가 생성된다. 실제로는 Go 컴파일러가 GC shape stenciling이라는 최적화를 적용하여, 포인터 크기가 같은 타입끼리 코드를 공유한다. 완전한 monomorphization과 완전한 type erasure 사이의 절충이다.
 
-실질적인 차이:
+정리하면:
 
 | | TypeScript | Go |
 |---|---|---|
@@ -250,13 +226,13 @@ Go의 제네릭은 컴파일 타임에 구체적인 타입으로 특수화(monom
 | 타입 검사 시점 | 컴파일 타임만 | 컴파일 타임 (런타임 타입도 유지) |
 | constraint 표현 | `extends`, conditional type 등 | interface 기반 |
 
-TypeScript는 타입 시스템이 Turing-complete에 가까울 만큼 표현력이 풍부하다. conditional type, mapped type, template literal type 등으로 복잡한 타입 연산을 할 수 있다. Go의 constraint 시스템은 의도적으로 단순하다. interface와 타입 union만으로 구성된다.
+Go의 constraint 시스템은 의도적으로 단순하다. interface와 타입 union만으로 구성된다.
 
 ## 제네릭 함수 실전 예제
 
 ### Map, Filter, Reduce
 
-09편에서 Go에는 `map`, `filter` 같은 고차 함수가 없다고 했다. 제네릭으로 직접 만들 수 있다:
+제네릭으로 `map`, `filter` 같은 고차 함수를 직접 만들 수 있다:
 
 ```go
 func Map[T any, U any](slice []T, f func(T) U) []U {
@@ -333,7 +309,7 @@ Go 커뮤니티는 제네릭 사용에 보수적이다. Go 팀 자체가 다음 
 
 **쓰지 않는 것이 나은 경우:**
 
-- 메서드 호출이 핵심인 경우 — interface가 더 적합하다
+- 메서드 호출이 핵심인 경우 — interface가 더 적합하다(08편)
 - 구현이 타입마다 다른 경우 — 제네릭은 동일한 로직에 타입만 다를 때 쓴다
 - 코드가 더 복잡해지는 경우 — 구체적인 타입으로 2-3번 쓰는 것이 제네릭 한 번보다 나을 수 있다
 
@@ -360,7 +336,7 @@ Go 프로버브 중 하나인 "A little copying is better than a little dependen
 
 ## 제약 사항
 
-Go의 제네릭에는 TypeScript에서 당연히 되는 것 중 안 되는 것이 있다:
+Go의 제네릭에는 몇 가지 제약이 있다:
 
 **메서드에는 타입 파라미터를 쓸 수 없다:**
 
@@ -391,4 +367,4 @@ func convert[T any](v any) T {
 
 Go 1.18에서는 불가능했으나 이후 버전에서 제한이 완화되었다.
 
-Go의 제네릭은 10년 넘게 논의 끝에 추가되었다. 그 기간만큼 보수적으로 설계되었다. TypeScript처럼 타입 수준의 프로그래밍을 하는 것이 아니라, 코드 중복을 제거하는 실용적 도구로 자리 잡았다. `slices`, `maps`, `cmp` 같은 표준 라이브러리가 제네릭의 가장 좋은 사용 예시다.
+Go의 제네릭은 10년 넘게 논의 끝에 추가되었다. 그 기간만큼 보수적으로 설계되었다. 타입 수준의 프로그래밍이 아니라, 코드 중복을 제거하는 실용적 도구로 자리 잡았다. `slices`, `maps`, `cmp` 같은 표준 라이브러리가 제네릭의 가장 좋은 사용 예시다.

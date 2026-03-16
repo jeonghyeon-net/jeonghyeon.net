@@ -1,10 +1,10 @@
 # 디버깅
 
-Node.js에서는 Chrome DevTools나 `--inspect` 플래그로 디버깅한다. 브라우저 기반 DevTools에 익숙하다면 Go의 디버깅 방식이 낯설 수 있다. Go에는 delve라는 전용 디버거가 있다. breakpoint, 변수 검사, step 실행은 물론 goroutine 상태까지 확인할 수 있다. Node.js 디버깅 경험과 비교하며 Go의 디버깅 도구를 다룬다.
+Go의 디버거는 delve다. Chrome DevTools나 `--inspect`에 익숙하다면 개념은 같다 — breakpoint, step 실행, 변수 검사 모두 가능하다. 거기에 goroutine 상태 확인까지 된다.
 
 ## delve 설치
 
-delve는 Go 전용 디버거다. GDB도 Go를 지원하지만, goroutine이나 Go 런타임을 제대로 이해하지 못한다. delve는 Go를 위해 만들어졌다:
+GDB도 Go를 지원하지만, goroutine이나 Go 런타임을 제대로 이해하지 못한다. delve는 Go를 위해 만들어졌다. V8 inspector처럼 내장된 것이 아니라 별도 설치가 필요하다:
 
 ```
 $ go install github.com/go-delve/delve/cmd/dlv@latest
@@ -12,8 +12,6 @@ $ dlv version
 Delve Debugger
 Version: 1.24.1
 ```
-
-Node.js는 V8 inspector가 내장되어 있지만, Go는 delve를 별도로 설치해야 한다.
 
 ## dlv debug — 기본 사용법
 
@@ -47,7 +45,7 @@ Type 'help' for list of commands.
 (dlv)
 ```
 
-Node.js의 `node --inspect-brk main.js`에 해당한다. `--inspect-brk`는 첫 줄에서 멈추고, `dlv debug`는 프로그램을 컴파일한 뒤 진입점에서 대기한다.
+`node --inspect-brk`와 같은 역할이다. 프로그램을 컴파일한 뒤 진입점에서 대기한다.
 
 기본 명령어:
 
@@ -113,7 +111,7 @@ Breakpoint 1 set at 0x104a2f0 for main.fibonacci() ./main.go:8
 5
 ```
 
-Node.js에서 Chrome DevTools의 "Edit breakpoint" > "Add conditional breakpoint"와 같은 기능이다. 반복문이나 재귀 함수에서 특정 조건을 추적할 때 유용하다.
+Chrome DevTools의 conditional breakpoint와 같은 기능이다. 반복문이나 재귀 함수에서 특정 조건을 추적할 때 유용하다.
 
 ## 변수 검사
 
@@ -200,11 +198,11 @@ VS Code에서 테스트 함수 위에 나타나는 "debug test" 링크를 클릭
 $ dlv test -- -run TestFibonacci
 ```
 
-`dlv test`는 `go test`와 같은 방식으로 테스트를 컴파일하되, 디버거를 붙여서 실행한다. Node.js에서 Jest를 `--inspect`로 실행하는 것에 해당한다.
+`dlv test`는 `go test`와 같은 방식으로 테스트를 컴파일하되, 디버거를 붙여서 실행한다. Jest를 `--inspect`로 실행하는 것과 같다.
 
 ## goroutine 디버깅
 
-Go 디버깅에서 Node.js와 가장 크게 다른 부분이다. Node.js는 싱글 스레드이므로 한 시점에 하나의 실행 흐름만 추적하면 된다. Go는 수십, 수백 개의 goroutine이 동시에 실행될 수 있다.
+breakpoint나 step 실행까지는 익숙한 영역이다. goroutine 디버깅은 다르다. 싱글 스레드 환경에서는 한 시점에 하나의 실행 흐름만 추적하면 되지만, Go는 수십, 수백 개의 goroutine이 동시에 실행될 수 있다.
 
 ```go
 package main
@@ -273,7 +271,7 @@ main.worker()
 
 ## fmt.Println 디버깅
 
-현실적으로 가장 많이 쓰이는 디버깅 방법이다. Go 개발자들 사이에서도 `fmt.Println`을 코드 곳곳에 넣어 값을 확인하는 방식이 여전히 흔하다. Node.js에서 `console.log`를 쓰는 것과 같다:
+`console.log` 디버깅의 Go 버전이다. Go 개발자들 사이에서도 `fmt.Println`을 코드 곳곳에 넣어 값을 확인하는 방식이 여전히 흔하다:
 
 ```go
 func processOrder(order Order) error {
@@ -336,6 +334,6 @@ VS Code에서는 launch.json에 remote 설정을 추가한다:
 }
 ```
 
-Node.js에서 `node --inspect=0.0.0.0:9229`로 원격 디버깅을 여는 것과 같은 패턴이다.
+`node --inspect=0.0.0.0:9229`와 같은 패턴이다.
 
-Node.js와 가장 큰 차이는 goroutine이다. 여러 goroutine이 동시에 실행되므로 각각의 상태를 개별적으로 추적해야 한다. delve는 이를 위해 만들어진 도구다. IDE와 연동하면 Node.js에서 VS Code로 디버깅하던 경험을 거의 그대로 가져올 수 있다.
+breakpoint, step 실행, 변수 검사까지는 IDE와 연동하면 기존 디버깅 경험을 거의 그대로 가져올 수 있다. 핵심적인 차이는 goroutine이다. 여러 goroutine이 동시에 실행되므로 각각의 상태를 개별적으로 추적해야 한다. delve는 이를 위해 만들어졌다.

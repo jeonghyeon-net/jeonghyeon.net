@@ -1,6 +1,6 @@
 # 코드 생성
 
-Node.js 생태계에서는 runtime reflection, decorator, proxy 등으로 런타임에 동적으로 행위를 만들어낸다. ORM이 decorator로 엔티티를 정의하고, DI 컨테이너가 reflection으로 의존성을 주입하고, GraphQL 라이브러리가 스키마에서 타입을 추론한다. Go는 이 문제를 다른 방식으로 푼다. 런타임에 마법을 부리는 대신 빌드 전에 코드를 생성한다. `go generate`가 그 도구다.
+runtime reflection, decorator, proxy 등으로 런타임에 동적으로 행위를 만들어내는 방식에 익숙할 것이다. Go는 이 문제를 다른 방식으로 푼다. 런타임에 마법을 부리는 대신 빌드 전에 코드를 생성한다. `go generate`가 그 도구다.
 
 ## go generate
 
@@ -19,7 +19,7 @@ hello from go generate
 
 `//go:generate` 뒤에 오는 것은 임의의 셸 명령이다. `go build`나 `go run`과 달리 `go generate`는 자동으로 실행되지 않는다. 개발자가 명시적으로 호출해야 한다. 이것이 핵심이다. 코드 생성은 빌드의 일부가 아니라 개발 과정의 일부다.
 
-Node.js에서 비슷한 역할을 하는 것은 `package.json`의 scripts다:
+`package.json` scripts와 같은 역할이다:
 
 ```json
 {
@@ -33,7 +33,7 @@ Node.js에서 비슷한 역할을 하는 것은 `package.json`의 scripts다:
 
 ## 왜 코드 생성인가
 
-Node.js/TypeScript에서는 런타임에 타입 정보를 활용하는 패턴이 흔하다:
+런타임에 타입 정보를 활용하는 패턴에 익숙할 것이다:
 
 ```typescript
 // TypeScript - decorator 기반 ORM
@@ -152,7 +152,7 @@ func TestService(t *testing.T) {
 }
 ```
 
-Node.js에서 Jest의 `jest.mock()`이나 `sinon.stub()`이 런타임에 하는 일을 Go는 컴파일 타임 코드 생성으로 해결한다. 생성된 mock은 타입 안전하다. interface에 메서드를 추가하면 `go generate`를 다시 실행해야 하고, mock이 갱신되지 않으면 컴파일이 실패한다. 런타임에 조용히 무시되는 일은 없다.
+`jest.mock()`이나 `sinon.stub()`이 런타임에 하는 일을 컴파일 타임 코드 생성으로 해결하는 셈이다. 생성된 mock은 타입 안전하다. interface에 메서드를 추가하면 `go generate`를 다시 실행해야 하고, mock이 갱신되지 않으면 컴파일이 실패한다. 런타임에 조용히 무시되는 일은 없다.
 
 ## protobuf/gRPC 코드 생성
 
@@ -213,11 +213,11 @@ func (s *server) GetUser(
 }
 ```
 
-Node.js에서도 protobuf/gRPC 코드 생성을 하지만, 보통 `postinstall`이나 빌드 스크립트로 처리한다. Go에서는 생성된 `.pb.go` 파일을 저장소에 커밋하는 것이 표준 관행이다.
+protobuf/gRPC 코드 생성은 언어를 불문하고 동일한 패턴이다. Go에서는 생성된 `.pb.go` 파일을 저장소에 커밋하는 것이 표준 관행이라는 점이 다르다.
 
 ## 생성된 코드는 커밋한다
 
-Go 생태계의 중요한 관행이다. `go generate`로 만든 파일은 버전 관리에 포함한다. Node.js에서 `node_modules`를 커밋하지 않고 `npm install`로 재생성하는 것, `prisma generate`를 `postinstall`에 넣어 매번 실행하는 것과 대비된다.
+Go 생태계의 중요한 관행이다. `go generate`로 만든 파일은 버전 관리에 포함한다. `node_modules`를 커밋하지 않고 `npm install`로 재생성하거나, `prisma generate`를 `postinstall`에 넣어 매번 실행하는 방식과 대비된다.
 
 Go가 이 방식을 택한 이유:
 
@@ -225,7 +225,7 @@ Go가 이 방식을 택한 이유:
 2. **의존 도구 최소화.** 코드를 빌드하는 데 필요한 것은 Go 컴파일러뿐이다. 코드 생성 도구는 생성하는 사람만 설치하면 된다.
 3. **변경 추적.** 생성된 코드의 변경이 git diff에 나타난다. 코드 리뷰에서 자동 생성된 부분의 변경도 확인할 수 있다.
 
-Node.js 프로젝트에서 `postinstall`로 코드를 생성하면, 같은 스키마에서 다른 버전의 도구가 다른 코드를 생성할 수 있다. 생성된 코드를 커밋하면 이 문제가 사라진다. 대신 PR에 생성된 파일의 diff가 포함되므로 리뷰할 때 자동 생성 부분은 건너뛸 수 있어야 한다. 첫 줄의 `Code generated ... DO NOT EDIT` 주석이 이 구분을 돕는다.
+`postinstall`로 코드를 생성하는 방식에서는 같은 스키마에서 다른 버전의 도구가 다른 코드를 생성할 수 있다. 생성된 코드를 커밋하면 이 문제가 사라진다. 대신 PR에 생성된 파일의 diff가 포함되므로 리뷰할 때 자동 생성 부분은 건너뛸 수 있어야 한다. 첫 줄의 `Code generated ... DO NOT EDIT` 주석이 이 구분을 돕는다.
 
 ## 자체 코드 생성 도구 만들기
 
@@ -265,6 +265,6 @@ func main() {
 //go:generate go run gen.go > all_statuses.go
 ```
 
-`//go:build ignore` 태그가 붙은 파일은 일반 빌드에서 제외된다. `go generate`에서 `go run`으로만 실행된다. Node.js에서 빌드 스크립트를 별도로 작성하는 것과 같은 패턴이지만, 생성 도구와 대상 코드가 같은 디렉토리에 있다는 점이 다르다.
+`//go:build ignore` 태그가 붙은 파일은 일반 빌드에서 제외된다. `go generate`에서 `go run`으로만 실행된다. 별도 빌드 스크립트와 같은 역할이지만, 생성 도구와 대상 코드가 같은 디렉토리에 있다.
 
 decorator가 런타임에 조용히 수행하는 변환을 Go는 실제 소스 코드로 만들어 저장소에 넣는다. 생성된 코드를 읽을 수 있고, 디버깅할 수 있고, git에서 변경을 추적할 수 있다.
