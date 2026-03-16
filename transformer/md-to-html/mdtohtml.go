@@ -74,6 +74,7 @@ func pageTemplate(cfg markdownutil.SiteConfig, title, description, pageURL, site
 	b.WriteString("  <link rel=\"canonical\" href=\"" + escapeAttr(pageURL) + "\">\n")
 	b.WriteString("  <link rel=\"alternate\" type=\"application/rss+xml\" title=\"" + escapeAttr(cfg.Name) + "\" href=\"" + escapeAttr(siteURL) + "/feed.xml\">\n")
 	b.WriteString("  <meta name=\"naver-site-verification\" content=\"f73475deafb4e1d4078595eb2f85688ef17ca83c\">\n")
+	b.WriteString("  <meta name=\"msvalidate.01\" content=\"F886743B6BEC1975804AFAF0B7D1F5A8\">\n")
 	b.WriteString("  <link rel=\"icon\" href=\"/favicon.ico\">\n")
 	b.WriteString("</head>\n<body>\n")
 	b.WriteString("<font face=\"" + escapeAttr(cfg.Font) + "\">\n")
