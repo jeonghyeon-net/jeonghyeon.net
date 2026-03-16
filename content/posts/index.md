@@ -4,3 +4,4 @@
 - [Dev tips](dev-tips/)
 - [Golang for nodejs developers](golang-for-nodejs-developers/)
 - [My gear](my-gear/)
+- [Sql mastery](sql-mastery/)
