@@ -236,7 +236,7 @@ SELECT * FROM orders WHERE id > 99980 ORDER BY id LIMIT 20;
 
 옵티마이저는 항상 인덱스를 쓰지 않는다. 인덱스 스캔이 오히려 느릴 수 있기 때문이다.
 
-06편에서 다룬 것처럼 secondary index를 통한 조회는 인덱스에서 primary key를 찾고, 다시 클러스터드 인덱스에서 실제 행을 읽는 두 단계를 거친다. 행 하나마다 random I/O가 발생한다.
+04편에서 다룬 것처럼 secondary index를 통한 조회는 인덱스에서 primary key를 찾고, 다시 클러스터드 인덱스에서 실제 행을 읽는 두 단계를 거친다. 행 하나마다 random I/O가 발생한다.
 
 테이블의 대부분을 읽어야 한다면, random I/O를 반복하는 것보다 테이블을 sequential하게 전체 스캔하는 편이 빠르다. MySQL 옵티마이저는 대략적으로 전체 행의 20~30%를 초과하면 풀 스캔을 선택한다.
 

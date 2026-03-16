@@ -161,7 +161,7 @@ mydb-cluster.cluster-ro-xxxx.us-east-1.rds.amazonaws.com
 
 Writer 인스턴스에 장애가 발생하면 다음 과정이 진행된다:
 
-```
+```text
 1. 장애 감지 (수 초)
    └─ Aurora 컨트롤 플레인이 writer의 health check 실패 감지
 

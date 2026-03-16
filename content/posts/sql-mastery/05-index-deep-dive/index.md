@@ -14,7 +14,7 @@ CREATE INDEX idx_customer_date ON orders (customer_id, order_date);
 
 리프 노드의 데이터 배치:
 
-```
+```text
 [customer_id=1, order_date=2024-01-15, PK=7]
 [customer_id=1, order_date=2024-03-20, PK=23]
 [customer_id=1, order_date=2024-07-01, PK=45]
@@ -103,7 +103,7 @@ SELECT customer_id, order_date, amount FROM orders WHERE customer_id = 42;
 EXPLAIN SELECT customer_id, order_date FROM orders WHERE customer_id = 42;
 ```
 
-```
+```text
 +----+------+----------------+---------+------+-------------+
 | id | type | key            | key_len | rows | Extra       |
 +----+------+----------------+---------+------+-------------+
@@ -131,7 +131,7 @@ cardinality는 인덱스 컬럼에 존재하는 고유 값(distinct value)의 �
 SHOW INDEX FROM orders;
 ```
 
-```
+```text
 +---------+----------+-----------+-------------+----------+
 | Table   | Key_name | Seq_in_idx| Column_name | Cardinality|
 +---------+----------+-----------+-------------+----------+

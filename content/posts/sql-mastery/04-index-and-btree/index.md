@@ -4,7 +4,7 @@
 
 ## 인덱스가 없을 때 -- 풀 테이블 스캔
 
-인덱스 없이 다음 쿼리를 실행한다고 하자:
+인덱스 없이 다음 쿼리를 실행한다:
 
 ```sql
 SELECT * FROM orders WHERE customer_id = 42;
@@ -28,7 +28,7 @@ B+tree는 세 종류의 노드로 구성된다:
 - **브랜치 노드(branch node)**: 중간 계층. 검색 방향을 결정하는 가이드 역할을 한다.
 - **리프 노드(leaf node)**: 최하위 계층. 실제 데이터(또는 데이터를 가리키는 포인터)가 여기에 있다.
 
-`customer_id` 컬럼에 인덱스가 있다고 하자. 트리의 구조는 이렇게 생겼다:
+`customer_id` 컬럼에 인덱스가 있다고 가정한다. 트리의 구조는 이렇게 생겼다:
 
 ```
              [루트: 100, 500]
@@ -89,7 +89,7 @@ PK가 auto increment 정수인 경우, 새로운 행은 항상 리프 노드의 
 
 ## Secondary index
 
-PK 이외의 컬럼에 만드는 인덱스가 secondary index다. `customer_id`에 인덱스를 만든다고 하자:
+PK 이외의 컬럼에 만드는 인덱스가 secondary index다. `customer_id`에 인덱스를 만드는 경우를 본다:
 
 ```sql
 CREATE INDEX idx_customer ON orders (customer_id);
@@ -115,7 +115,7 @@ Secondary Index (customer_id):
 
 ## 인덱스로 검색할 때 일어나는 일
 
-다시 이 쿼리를 보자:
+다시 이 쿼리를 본다:
 
 ```sql
 SELECT * FROM orders WHERE customer_id = 42;
@@ -125,7 +125,7 @@ SELECT * FROM orders WHERE customer_id = 42;
 
 **1단계: Secondary index 탐색**
 
-secondary index의 B+tree를 루트부터 탐색하여 `customer_id = 42`인 리프 노드에 도달한다. 여기서 해당하는 PK 값들을 얻는다. 예를 들어 PK가 `7, 15, 203`이라고 하자.
+secondary index의 B+tree를 루트부터 탐색하여 `customer_id = 42`인 리프 노드에 도달한다. 여기서 해당하는 PK 값들을 얻는다. 예를 들어 PK가 `7, 15, 203`이라고 가정한다.
 
 **2단계: PK lookup (bookmark lookup)**
 
@@ -143,7 +143,7 @@ secondary index의 B+tree를 루트부터 탐색하여 `customer_id = 42`인 리
                                  PK=203 → 전체 행 반환
 ```
 
-총 디스크 접근 횟수를 세어 보자. Secondary index 탐색에 2~3회, PK lookup에 결과 행 하나당 2~3회. `customer_id = 42`인 행이 3건이면, 최악의 경우 약 12회의 page 읽기로 끝난다. 풀 테이블 스캔의 12,500회와 비교하면 1,000배 차이다.
+총 디스크 접근 횟수를 세어 본다. Secondary index 탐색에 2~3회, PK lookup에 결과 행 하나당 2~3회. `customer_id = 42`인 행이 3건이면, 최악의 경우 약 12회의 page 읽기로 끝난다. 풀 테이블 스캔의 12,500회와 비교하면 1,000배 차이다.
 
 ## 왜 풀 스캔보다 빠른가
 

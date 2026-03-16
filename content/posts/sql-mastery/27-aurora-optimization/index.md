@@ -29,7 +29,7 @@ MySQL 5.6 이상에서는 `innodb_buffer_pool_dump_at_shutdown`과 `innodb_buffe
 
 Aurora의 survivable buffer pool(또는 buffer pool warm cache)은 이 문제를 다르게 해결한다. Aurora는 buffer pool의 page 캐시를 컴퓨트 인스턴스의 프로세스 외부(별도 캐시 레이어)에 유지한다. 데이터베이스 프로세스가 재시작되어도 이 캐시가 사라지지 않는다.
 
-```
+```text
 [기존 MySQL 재시작]
 재시작 전: buffer pool 100% warm → 재시작 → buffer pool 0% → 점진적 warm up
 

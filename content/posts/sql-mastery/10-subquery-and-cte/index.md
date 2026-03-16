@@ -18,7 +18,7 @@ SELECT
 FROM employees;
 ```
 
-```
+```text
 +-------+--------+------------+
 | name  | salary | avg_salary |
 +-------+--------+------------+
@@ -315,7 +315,7 @@ WITH RECURSIVE category_tree AS (
 SELECT * FROM category_tree;
 ```
 
-```
+```text
 +----+-----------+-----------+-------+
 | id | name      | parent_id | depth |
 +----+-----------+-----------+-------+
@@ -353,7 +353,7 @@ WITH RECURSIVE category_path AS (
 SELECT name, path FROM category_path;
 ```
 
-```
+```text
 +-----------+---------------------------+
 | name      | path                      |
 +-----------+---------------------------+
@@ -397,7 +397,7 @@ GROUP BY d.dt
 ORDER BY d.dt;
 ```
 
-```
+```text
 +------------+-------------+
 | dt         | order_count |
 +------------+-------------+

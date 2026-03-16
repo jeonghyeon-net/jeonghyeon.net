@@ -10,7 +10,7 @@ FROM employees
 GROUP BY dept_id;
 ```
 
-```
+```text
 +---------+-----+
 | dept_id | cnt |
 +---------+-----+
@@ -87,7 +87,7 @@ HAVING cnt >= 5;
 
 실행 순서를 다시 떠올리면:
 
-```
+```text
 FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT
 ```
 

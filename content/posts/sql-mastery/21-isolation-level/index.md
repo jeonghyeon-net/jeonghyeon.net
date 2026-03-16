@@ -175,7 +175,7 @@ InnoDB의 REPEATABLE READ에서 locking read(`SELECT ... FOR UPDATE`)나 `UPDATE
 
 `age` 컬럼에 인덱스가 있고 현재 값이 `[18, 22, 25, 28, 35]`인 경우, `WHERE age BETWEEN 20 AND 30`으로 locking read를 하면 다음 범위에 넥스트키 락이 걸린다.
 
-```
+```text
 (18, 22] — 22에 레코드 락 + (18, 22) 갭 락
 (22, 25] — 25에 레코드 락 + (22, 25) 갭 락
 (25, 28] — 28에 레코드 락 + (25, 28) 갭 락

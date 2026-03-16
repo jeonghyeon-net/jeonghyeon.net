@@ -68,7 +68,7 @@ SHOW TABLE STATUS FROM mydb WHERE Name = 'orders'\G
 
 MySQL 5.5부터 InnoDB가 기본 스토리지 엔진이 되었다. 그 전에는 MyISAM이 기본이었다. 교체된 이유는 세 가지다.
 
-### 트랜잭션
+### Transaction
 
 은행 계좌 이체를 생각한다. A 계좌에서 10만 원을 빼고 B 계좌에 10만 원을 넣는 작업은 반드시 둘 다 성공하거나 둘 다 실패해야 한다. A에서 빠졌는데 B에 넣기 전에 서버가 죽으면 10만 원이 사라진다.
 
