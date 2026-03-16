@@ -311,12 +311,9 @@ SHOW VARIABLES LIKE 'innodb_page_size';
 
 ## 정리
 
-MySQL의 스토리지 엔진은 pluggable 아키텍처로 교체가 가능하며, InnoDB가 기본이다. InnoDB가 기본인 이유는 트랜잭션, crash recovery, 행 수준 락을 지원하기 때문이다.
-
-InnoDB의 핵심 구조는 세 가지다:
-
-- **Buffer pool**: 디스크의 데이터 페이지를 메모리에 캐싱한다. 데이터베이스 성능의 핵심.
-- **Redo log**: 변경 내용을 순차적으로 기록한다. crash recovery의 기반.
-- **Undo log**: 변경 전 데이터를 보존한다. 롤백과 MVCC에 사용.
-
-디스크 I/O가 데이터베이스 성능의 가장 큰 병목이며, buffer pool이 이를 완화한다. InnoDB는 16KB 페이지 단위로 데이터를 읽고 쓴다. 이 페이지 개념은 데이터베이스의 물리적 저장 구조를 이해하는 출발점이다.
+- MySQL의 스토리지 엔진은 pluggable 아키텍처로 교체가 가능하며, InnoDB가 기본이다. InnoDB가 기본인 이유는 트랜잭션, crash recovery, 행 수준 락을 지원하기 때문이다.
+- **Buffer pool**은 디스크의 데이터 페이지를 메모리에 캐싱한다. 데이터베이스 성능의 핵심이다.
+- **Redo log**는 변경 내용을 순차적으로 기록한다. crash recovery의 기반이다.
+- **Undo log**는 변경 전 데이터를 보존한다. 롤백과 MVCC에 사용된다.
+- 디스크 I/O가 데이터베이스 성능의 가장 큰 병목이며, buffer pool이 이를 완화한다.
+- InnoDB는 16KB 페이지 단위로 데이터를 읽고 쓴다. 이 페이지 개념은 데이터베이스의 물리적 저장 구조를 이해하는 출발점이다.

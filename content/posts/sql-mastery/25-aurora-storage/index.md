@@ -126,7 +126,7 @@ Aurora는 redo log record만 전송한다. 변경된 내용을 서술하는 log 
 
 스토리지 노드는 백그라운드에서 축적된 redo log record를 data page에 적용한다. 이 과정을 page materialization 또는 coalescing이라고 한다.
 
-```
+```text
 스토리지 노드의 동작:
 
 [수신]                    [백그라운드 적용]
@@ -149,7 +149,7 @@ log record #103 → 저장    ─→ page X에 적용
 
 스토리지 노드는 기존 page에 아직 적용하지 않은 log record를 즉석에서 적용하여 최신 page를 생성한 뒤 반환한다. 이것을 on-demand materialization이라고 한다.
 
-```
+```text
 컴퓨트 노드: "page X 줘"
     │
     ▼

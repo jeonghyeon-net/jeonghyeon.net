@@ -78,7 +78,7 @@ Writer가 data page를 변경하면, 해당 변경 사항이 reader에 반영되
 
 Writer는 redo log record를 스토리지에 보내는 것과 동시에, 각 reader 인스턴스에도 전송한다. Reader는 이 log record를 받아서 자신의 buffer pool에서 해당 page를 무효화(invalidate)하거나, log를 적용하여 page를 갱신한다.
 
-```
+```text
 Writer: page X 변경 (redo log record 생성)
     │
     ├──→ 스토리지: redo log 영속화
