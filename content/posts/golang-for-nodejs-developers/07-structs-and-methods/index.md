@@ -33,6 +33,20 @@ func main() {
 
 `type User struct`가 타입을 정의한다. `class`와 달리 constructor가 없고, 메서드도 struct 안에 들어가지 않는다. struct는 순수하게 데이터의 구조만 정의한다.
 
+TypeScript 개발자라면 Go의 struct가 `interface`나 `type`으로 정의하는 데이터 shape에 더 가깝다고 느낄 수 있다:
+
+```typescript
+// TypeScript: 데이터 shape 정의
+interface User {
+  name: string;
+  age: number;
+}
+
+const user: User = { name: "Alice", age: 30 };
+```
+
+형태는 비슷하지만 결정적 차이가 있다. TypeScript의 `interface`는 구조적 타이핑이라 shape만 같으면 호환된다. Go의 struct는 명목적 타이핑이라 이름이 다르면 다른 타입이다(03편 참고). 그리고 Go의 struct에는 메서드를 붙일 수 있지만, TypeScript의 `interface`는 구현을 가질 수 없다.
+
 ## struct 초기화
 
 struct를 만드는 방법이 여러 가지다:
@@ -403,4 +417,4 @@ func main() {
 
 상태를 변경하는 타입은 pointer receiver로 통일하고, 생성 시에도 포인터를 반환하는 것이 일반적 패턴이다. JavaScript에서 class 인스턴스가 항상 참조로 다뤄지는 것과 같은 효과다.
 
-Go의 struct와 method는 class보다 단순하다. 데이터(struct)와 동작(method)이 분리되어 있고, 상속 대신 합성을 쓴다. embedding과 interface가 결합되면 class 없이도 다형성을 구현할 수 있다.
+Go의 struct와 method는 class보다 단순하다. 데이터(struct)와 동작(method)이 분리되어 있고, 상속 대신 합성을 쓴다. TypeScript에서 `interface`로 shape을 정의하고 `class`로 구현을 붙이는 이중 구조가 Go에서는 struct 하나로 통합된다. embedding과 interface가 결합되면 class 없이도 다형성을 구현할 수 있다.

@@ -180,7 +180,9 @@ let y = null;    // null
 console.log(x);  // undefined
 ```
 
-JavaScript에는 `undefined`와 `null`이라는 두 가지 "없음"이 있다. Go에는 `undefined`가 없다. 선언된 변수는 항상 유효한 값을 가진다. `int`의 zero value는 `0`이지 "값이 없음"이 아니다.
+JavaScript에는 `undefined`와 `null`이라는 두 가지 "없음"이 있다. TypeScript의 `strictNullChecks`를 켜면 `null`과 `undefined`를 명시적으로 처리해야 하므로 상황이 나아지지만, 이는 컴파일 타임 검사일 뿐이고 런타임에는 여전히 `null`/`undefined`가 존재한다.
+
+Go에는 `undefined`가 없다. 선언된 변수는 항상 유효한 값을 가진다. `int`의 zero value는 `0`이지 "값이 없음"이 아니다.
 
 이 차이가 실무에서 의미하는 것:
 
@@ -210,6 +212,8 @@ JavaScript는 암묵적 형변환(implicit coercion)이 만연하다:
 true + 1       // 2
 "" == false    // true
 ```
+
+TypeScript가 이 중 일부를 잡아준다. `"5" - 3`은 컴파일 에러다. 하지만 `"5" + 3`은 TypeScript에서도 허용된다 — `string + number`는 string 결합으로 취급하기 때문이다.
 
 Go에서는 암묵적 형변환이 없다. 타입이 다르면 명시적으로 변환해야 한다. 그렇지 않으면 컴파일 에러다.
 
