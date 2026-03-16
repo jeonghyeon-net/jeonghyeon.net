@@ -1,4 +1,4 @@
-# Golang For Nodejs Developers
+# Golang for nodejs developers
 
 1. [왜 Go인가](01-why-go/)
 2. [개발 환경 설정](02-setup/)

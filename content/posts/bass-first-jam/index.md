@@ -1,4 +1,4 @@
-# Bass First Jam
+# Bass first jam
 
 1. [Backing track 위에서 연주한다는 것](01-the-goal/)
 2. [음을 알아야 연주를 한다](02-notes/)

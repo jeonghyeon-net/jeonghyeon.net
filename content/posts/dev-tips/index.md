@@ -1,4 +1,4 @@
-# Dev Tips
+# Dev tips
 
 1. [Colima 설치](01-colima/)
 2. [맥 터미널에 브랜치명 보이게 하기](02-mac-terminal-git-branch/)

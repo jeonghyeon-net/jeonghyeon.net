@@ -1,4 +1,4 @@
-# My Gear
+# My gear
 
 1. [AtelierZ M245 CTM](01-atelierz-m245-ctm/)
 2. [AtelierZ M265](02-atelierz-m265/)
