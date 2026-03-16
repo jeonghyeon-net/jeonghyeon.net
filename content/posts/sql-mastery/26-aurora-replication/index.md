@@ -4,7 +4,7 @@
 
 ## 기존 MySQL 복제의 구조
 
-기존 MySQL의 복제 흐름을 먼저 정리하자.
+기존 MySQL의 복제 흐름을 먼저 정리한다.
 
 ```
 [기존 MySQL 복제]
@@ -123,7 +123,7 @@ Aurora는 여러 인스턴스에 대한 접근을 endpoint로 추상화한다.
 
 항상 현재 writer 인스턴스를 가리키는 DNS다. 쓰기 작업과 최신 데이터가 필요한 읽기에 사용한다. Failover가 발생하면 이 endpoint가 새로운 writer를 가리키도록 DNS가 업데이트된다.
 
-```
+```text
 mydb-cluster.cluster-xxxx.us-east-1.rds.amazonaws.com
 → 현재 writer 인스턴스의 IP
 ```
@@ -132,7 +132,7 @@ mydb-cluster.cluster-xxxx.us-east-1.rds.amazonaws.com
 
 Reader 인스턴스들에 대한 로드 밸런서 역할을 하는 DNS다. 연결 시점에 가용한 reader 중 하나로 라우팅된다.
 
-```
+```text
 mydb-cluster.cluster-ro-xxxx.us-east-1.rds.amazonaws.com
 → reader 인스턴스 중 하나의 IP (라운드 로빈)
 ```
@@ -143,7 +143,7 @@ mydb-cluster.cluster-ro-xxxx.us-east-1.rds.amazonaws.com
 
 특정 reader 인스턴스들을 그룹으로 묶어 만드는 endpoint다. 용도별로 분리할 때 유용하다.
 
-```
+```text
 예시:
 - analytics-endpoint → r6g.4xlarge 인스턴스 2개 (분석 쿼리용)
 - api-endpoint → r6g.xlarge 인스턴스 3개 (API 읽기용)

@@ -64,7 +64,7 @@ WHERE customer_id = 42;
 
 집계 결과를 미리 계산해서 별도 테이블에 저장하는 패턴이다.
 
-게시글의 댓글 수를 매번 COUNT로 계산한다고 하자:
+게시글의 댓글 수를 매번 COUNT로 계산하는 상황을 가정한다:
 
 ```sql
 SELECT p.post_id, p.title, COUNT(c.comment_id) AS comment_count

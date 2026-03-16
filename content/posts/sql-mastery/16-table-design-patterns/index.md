@@ -371,10 +371,11 @@ PARTITION BY RANGE (YEAR(created_at)) (
 
 ```sql
 CREATE TABLE orders (
-    order_id    BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    order_id    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     region      VARCHAR(10) NOT NULL,
     total       DECIMAL(10,2),
-    created_at  DATE NOT NULL
+    created_at  DATE NOT NULL,
+    PRIMARY KEY (order_id, region)
 )
 PARTITION BY LIST COLUMNS (region) (
     PARTITION p_kr VALUES IN ('KR'),
@@ -392,10 +393,11 @@ PARTITION BY LIST COLUMNS (region) (
 
 ```sql
 CREATE TABLE sessions (
-    session_id   BINARY(16) PRIMARY KEY,
-    user_id      INT UNSIGNED,
+    session_id   BINARY(16) NOT NULL,
+    user_id      INT UNSIGNED NOT NULL,
     data         JSON,
-    expires_at   DATETIME
+    expires_at   DATETIME,
+    PRIMARY KEY (session_id, user_id)
 )
 PARTITION BY HASH (user_id)
 PARTITIONS 8;

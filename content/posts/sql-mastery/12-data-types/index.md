@@ -42,7 +42,7 @@ INSERT INTO measurements VALUES (1, 0.1 + 0.2, 0.1 + 0.2);
 SELECT * FROM measurements;
 ```
 
-```
+```text
 +----+--------------------+--------------------+
 | id | value_float        | value_double       |
 +----+--------------------+--------------------+
@@ -64,7 +64,7 @@ INSERT INTO prices VALUES (1, 0.10 + 0.20);
 SELECT * FROM prices;
 ```
 
-```
+```text
 +----+-------+
 | id | price |
 +----+-------+

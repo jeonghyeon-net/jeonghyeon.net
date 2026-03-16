@@ -35,7 +35,7 @@ FROM employees e
 INNER JOIN departments d ON e.dept_id = d.id;
 ```
 
-```
+```text
 +-------+-------------+
 | name  | dept        |
 +-------+-------------+
@@ -57,7 +57,7 @@ FROM employees e
 LEFT JOIN departments d ON e.dept_id = d.id;
 ```
 
-```
+```text
 +-------+-------------+
 | name  | dept        |
 +-------+-------------+
@@ -90,7 +90,7 @@ FROM employees e
 RIGHT JOIN departments d ON e.dept_id = d.id;
 ```
 
-```
+```text
 +-------+-------------+
 | name  | dept        |
 +-------+-------------+

@@ -12,7 +12,7 @@ MySQL에서 복잡한 쿼리(GROUP BY, DISTINCT, 서브쿼리, UNION 등)를 실
 
 Aurora에서 임시 테이블이 디스크로 전환되면, 이 데이터는 로컬 임시 볼륨에 기록된다. Aurora MySQL 3.x(MySQL 8.0 호환)에서는 TempTable 스토리지 엔진이 기본이며, 메모리 한도를 초과하면 로컬 임시 스토리지를 사용한다. 이 임시 스토리지의 크기는 인스턴스 타입에 따라 제한된다.
 
-```
+```text
 인스턴스 타입별 로컬 임시 스토리지 한도 (대략적):
 - r6g.large:    ~16 GB
 - r6g.xlarge:   ~32 GB

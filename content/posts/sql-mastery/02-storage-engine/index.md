@@ -19,7 +19,7 @@ CREATE TABLE orders (
 -- MEMORY 테이블 (서버 재시작 시 데이터 유실)
 CREATE TABLE sessions (
     session_id CHAR(36) PRIMARY KEY,
-    data TEXT
+    data VARCHAR(4096)
 ) ENGINE=MEMORY;
 ```
 

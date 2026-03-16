@@ -10,7 +10,7 @@
 EXPLAIN SELECT * FROM orders WHERE user_id = 42 ORDER BY created_at DESC;
 ```
 
-```
+```text
 +----+-------------+--------+------+---------------+--------------+---------+-------+------+-------------+
 | id | select_type | table  | type | possible_keys | key          | key_len | ref   | rows | Extra       |
 +----+-------------+--------+------+---------------+--------------+---------+-------+------+-------------+
@@ -110,7 +110,7 @@ PRIMARY KEY 또는 UNIQUE 인덱스로 상수 값을 비교하여, 최대 하나
 EXPLAIN SELECT * FROM users WHERE id = 1;
 ```
 
-```
+```text
 +----+-------------+-------+-------+---------------+---------+---------+-------+------+-------+
 | id | select_type | table | type  | possible_keys | key     | key_len | ref   | rows | Extra |
 +----+-------------+-------+-------+---------------+---------+---------+-------+------+-------+
@@ -343,7 +343,7 @@ WHERE u.status = 'active'
 GROUP BY u.id\G
 ```
 
-```
+```text
 -> Group aggregate: count(0)
     -> Nested loop inner join  (cost=4.75 rows=10)
         -> Index lookup on u using idx_status (status='active')  (cost=2.50 rows=10)
@@ -365,7 +365,7 @@ WHERE u.status = 'active'
 GROUP BY u.id\G
 ```
 
-```
+```text
 -> Group aggregate: count(0)  (actual time=0.512..0.892 rows=8 loops=1)
     -> Nested loop inner join  (cost=4.75 rows=10)
                                (actual time=0.089..0.834 rows=45 loops=1)
@@ -413,7 +413,7 @@ ORDER BY o.created_at DESC
 LIMIT 20\G
 ```
 
-```
+```text
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE
@@ -462,7 +462,7 @@ ALTER TABLE orders ADD INDEX idx_status_created (status, created_at);
 
 이 인덱스를 만들고 다시 EXPLAIN을 실행한다.
 
-```
+```text
 *************************** 1. row ***************************
            id: 1
   select_type: SIMPLE

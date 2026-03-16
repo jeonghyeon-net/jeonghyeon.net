@@ -48,7 +48,7 @@ log_queries_not_using_indexes = ON
 
 slow query log의 각 항목은 다음과 같은 형태다.
 
-```
+```text
 # Time: 2026-03-15T10:23:45.123456Z
 # User@Host: app[app] @ 10.0.0.5 []  Id: 12345
 # Query_time: 3.456789  Lock_time: 0.000123  Rows_sent: 1  Rows_examined: 1250000
@@ -91,7 +91,7 @@ mysqldumpslow -s at -t 10 /var/log/mysql/slow.log
 
 출력 예시:
 
-```
+```text
 Count: 1523  Time=2.45s (3731s)  Lock=0.00s (0s)  Rows=10.0 (15230), app[app]@10.0.0.5
   SELECT u.name, u.email FROM users u JOIN orders o ON u.id = o.user_id WHERE o.created_at > 'S' ORDER BY o.created_at DESC LIMIT N;
 ```
@@ -119,7 +119,7 @@ pt-query-digest --limit 20 /var/log/mysql/slow.log
 
 **쿼리 프로파일**: 가장 많은 시간을 소비한 쿼리 패턴을 순위별로 나열
 
-```
+```text
 # Profile
 # Rank Query ID                     Response time   Calls  R/Call
 # ==== ============================ =============== ====== ======
@@ -188,7 +188,7 @@ ORDER BY SUM_TIMER_WAIT DESC
 LIMIT 10;
 ```
 
-```
+```text
 +------------------------------------------+------------+----------------+--------------+---------------+-----------+
 | DIGEST_TEXT                              | exec_count | total_time_sec | avg_time_sec | rows_examined | rows_sent |
 +------------------------------------------+------------+----------------+--------------+---------------+-----------+
@@ -299,7 +299,7 @@ SHOW PROFILES;
 SHOW PROFILE FOR QUERY 1;
 ```
 
-```
+```text
 +----------------------+----------+
 | Status               | Duration |
 +----------------------+----------+
