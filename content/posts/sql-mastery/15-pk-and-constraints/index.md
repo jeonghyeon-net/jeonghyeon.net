@@ -291,12 +291,10 @@ ADD CONSTRAINT chk_status CHECK (status IN ('pending', 'confirmed', 'shipped', '
 
 CHECK에서 서브쿼리나 stored function 호출은 허용되지 않는다. 다른 테이블을 참조하는 제약은 FK나 트리거로 처리해야 한다.
 
-## 설계 요약
+## 정리
 
-PK와 제약 조건의 선택은 성능과 무결성 모두에 영향을 미친다:
-
-- PK는 AUTO_INCREMENT 정수형을 기본으로 사용한다. 분산 환경에서 UUID가 필요하면 UUID v7 또는 시간 순서가 보장되는 방식을 선택한다.
-- PK가 크면 모든 secondary index가 커진다. PK 크기를 작게 유지한다.
-- NOT NULL을 기본으로 하고, NULL이 의미가 있는 경우에만 nullable로 둔다.
-- FK는 참조 무결성을 보장하지만 성능 비용이 있다. 사용하지 않기로 했다면 애플리케이션 레벨에서 동등한 보장을 구현해야 한다.
-- CHECK는 데이터의 기본 유효성을 데이터베이스 레벨에서 강제하는 마지막 방어선이다.
+- InnoDB에서 PK는 clustered index의 키이며, 모든 secondary index가 PK 값을 포함하므로 PK 크기가 전체 인덱스 성능에 영향을 미친다.
+- AUTO_INCREMENT 정수형 PK는 순차 삽입, 페이지 분할 최소화, 작은 저장 크기라는 이점이 있다.
+- UUID를 PK로 사용해야 하면 UUID v7처럼 시간 순서가 보장되는 방식을 선택한다.
+- NOT NULL을 기본으로 하고, FK는 참조 무결성을 보장하지만 성능 비용이 있으므로 팀 정책에 따라 결정한다.
+- CHECK 제약 조건은 어떤 경로로 데이터가 들어오든 잘못된 값을 방지하는 마지막 방어선이다.

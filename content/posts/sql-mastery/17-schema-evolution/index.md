@@ -314,3 +314,11 @@ WHERE OBJECT_SCHEMA = 'mydb' AND OBJECT_NAME = 'users';
 - COPY 알고리즘의 직접 ALTER는 완료 후 롤백이 어렵다. 사전에 백업을 확보한다.
 
 스키마 변경은 기능 개발만큼이나 중요한 운영 작업이다. 테이블이 작을 때는 아무 변경이나 즉시 실행해도 되지만, 운영 데이터가 쌓이면 DDL 하나에도 서비스 장애가 발생할 수 있다. 변경의 내부 동작을 이해하고, 안전한 실행 경로를 선택하는 것이 핵심이다.
+
+## 정리
+
+- ALTER TABLE은 INSTANT, INPLACE, COPY 세 가지 알고리즘이 있으며, INSTANT가 가장 빠르고 안전하다.
+- Online DDL은 DDL 중에도 DML을 허용하지만, 시작과 끝에 metadata lock이 필요하므로 장시간 트랜잭션이 있으면 전체 쿼리가 차단될 수 있다.
+- 대용량 테이블의 스키마 변경은 pt-online-schema-change나 gh-ost를 사용하여 무중단으로 수행한다.
+- 컬럼 이름 변경 같은 호환성 문제가 있는 변경은 expand and contract 패턴으로 여러 배포에 걸쳐 진행한다.
+- 운영 환경에서 DDL을 실행하기 전에 테이블 크기, 알고리즘, 디스크 여유 공간, 장시간 트랜잭션 유무를 확인해야 한다.

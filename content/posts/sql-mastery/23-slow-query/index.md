@@ -503,6 +503,9 @@ SHOW GLOBAL STATUS LIKE 'Innodb_rows_%';
 
 ## 정리
 
-느린 쿼리 해결은 식별, 분석, 최적화, 검증의 반복이다. slow query log는 기준 시간을 초과한 쿼리를 파일로 기록하고, `pt-query-digest`로 패턴별 집계를 확인한다. Performance Schema는 실시간으로 쿼리 통계를 수집하며, sys 스키마의 뷰로 쉽게 조회할 수 있다. 문제 쿼리를 찾으면 EXPLAIN으로 실행 계획을 분석하고, 인덱스 추가나 쿼리 리팩토링으로 최적화한 뒤 효과를 검증한다.
-
-이 과정을 일회성이 아닌 지속적인 모니터링 체계로 만드는 것이 중요하다. 오늘 빠른 쿼리가 데이터가 쌓이면서 내일 느려질 수 있다. slow query log를 상시 활성화하고, Performance Schema 통계를 주기적으로 확인하며, 모니터링 도구로 추세를 관찰하는 것이 안정적인 운영의 기본이다.
+- 느린 쿼리 해결은 식별, 분석, 최적화, 검증의 반복이다.
+- slow query log는 기준 시간을 초과한 쿼리를 파일로 기록하고, `pt-query-digest`로 패턴별 집계를 확인한다.
+- Performance Schema는 실시간으로 쿼리 통계를 수집하며, `events_statements_summary_by_digest` 테이블로 top query를 조회할 수 있다.
+- sys 스키마는 Performance Schema 데이터를 읽기 쉬운 뷰로 제공한다. full table scan, 임시 테이블 사용, 미사용 인덱스 등을 쉽게 파악할 수 있다.
+- 문제 쿼리를 찾으면 EXPLAIN으로 실행 계획을 분석하고, 인덱스 추가나 쿼리 리팩토링으로 최적화한 뒤 효과를 검증한다.
+- slow query log를 상시 활성화하고, Performance Schema 통계를 주기적으로 확인하며, 모니터링 도구로 추세를 관찰하는 것이 안정적인 운영의 기본이다.

@@ -277,3 +277,11 @@ Primary 리전 (us-east-1)           Secondary 리전 (ap-northeast-2)
 | Cross-region | binlog 기반 | Global Database (스토리지 레벨) |
 
 Aurora의 공유 스토리지 복제는 replica 추가가 빠르고, 복제 지연이 작고, failover 시 데이터 손실이 없다는 구조적 이점이 있다. 다만 최대 15개라는 reader 수 제한과, binlog 기반 외부 복제가 기본적으로 비활성화되어 있다는 점은 기존 MySQL 복제와 다른 운영 전략을 요구한다.
+
+## 정리
+
+- Aurora 복제는 공유 스토리지 기반이며, binlog 전송 없이 cache invalidation만으로 reader를 갱신한다.
+- 복제 지연은 일반적으로 10~20ms 수준이며, reader의 buffer pool 압박이나 대량 쓰기 시 증가할 수 있다.
+- Reader endpoint는 연결(connection) 수준에서 라우팅하므로, 쿼리 단위 분산이 아닌 커넥션 단위 분산이다.
+- Failover는 보통 30초 이내에 완료되며, reader를 최소 1개 유지하고 failover priority를 설정해야 빠른 복구가 가능하다.
+- Global Database는 cross-region 복제를 스토리지 레벨에서 제공하며, 보통 1초 이내의 복제 지연을 보인다.

@@ -321,3 +321,11 @@ WHERE id BETWEEN 1 AND 10000;
 - UPDATE: 변경된 컬럼에 걸린 인덱스마다 기존 항목 삭제 + 새 항목 추가.
 
 쓰기 비중이 높은 테이블에서는 불필요한 인덱스를 제거하는 것만으로도 성능이 크게 개선될 수 있다.
+
+## 정리
+
+- INSERT는 buffer pool과 redo log에 기록하며, 실제 디스크 쓰기는 비동기로 처리된다.
+- AUTO_INCREMENT 값은 롤백되어도 되돌아가지 않으며, 연속성이 보장되지 않는다.
+- 랜덤 PK(UUID)는 페이지 분할을 유발하여 순차 PK 대비 삽입 성능이 크게 저하된다.
+- 대량 데이터 변경은 배치로 나누어 처리해야 undo log 누적과 락 경합을 방지할 수 있다.
+- REPLACE보다 INSERT ... ON DUPLICATE KEY UPDATE가 안전하며, TRUNCATE는 DDL이므로 롤백이 불가능하다.

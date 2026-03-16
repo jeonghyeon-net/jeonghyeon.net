@@ -285,6 +285,8 @@ SELECT val FROM test_isolation WHERE id = 1;  -- 200 (새 트랜잭션)
 
 ## 정리
 
-격리 수준은 동시성과 일관성 사이의 트레이드오프를 결정한다. InnoDB는 MVCC를 통해 읽기와 쓰기가 서로를 차단하지 않으면서도 일관된 읽기를 보장한다. REPEATABLE READ와 READ COMMITTED의 차이는 ReadView 생성 시점이며, 넥스트키 락의 사용 여부가 동시성에 큰 영향을 미친다.
-
-격리 수준을 변경하기 전에 애플리케이션의 동작을 충분히 테스트해야 한다. 특히 REPEATABLE READ에서 READ COMMITTED로 변경하면 같은 트랜잭션 안에서 읽는 데이터가 달라질 수 있으므로, 이를 전제로 작성된 로직이 없는지 확인한다.
+- 격리 수준은 동시성과 일관성 사이의 트레이드오프를 결정한다.
+- InnoDB는 MVCC를 통해 읽기와 쓰기가 서로를 차단하지 않으면서도 일관된 읽기를 보장한다.
+- REPEATABLE READ와 READ COMMITTED의 차이는 ReadView 생성 시점이다. REPEATABLE READ는 트랜잭션의 첫 SELECT에서, READ COMMITTED는 매 SELECT마다 ReadView를 생성한다.
+- InnoDB의 넥스트키 락은 REPEATABLE READ에서 phantom read를 방지하지만, 갭 락으로 인한 동시성 저하와 데드락의 원인이 될 수 있다.
+- 격리 수준을 변경하기 전에 애플리케이션의 동작을 충분히 테스트해야 한다. REPEATABLE READ에서 READ COMMITTED로 변경하면 같은 트랜잭션 안에서 읽는 데이터가 달라질 수 있다.

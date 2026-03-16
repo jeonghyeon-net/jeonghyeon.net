@@ -307,3 +307,11 @@ DELETE FROM logs WHERE created_at < '2024-01-01' LIMIT 5000;
 ```
 
 Aurora의 아키텍처를 이해하면, 기존 MySQL 운영 경험을 그대로 가져가되 스토리지 I/O 비용, buffer pool 관리, failover 설계라는 세 가지 축에서 추가적인 주의를 기울여야 한다는 것을 알 수 있다.
+
+## 정리
+
+- Aurora 컴퓨트 인스턴스에는 로컬 영구 디스크가 없으므로, 임시 테이블과 filesort의 디스크 사용량이 인스턴스 타입에 의해 제한된다.
+- Binlog 활성화는 Aurora의 "redo log만 전송" 원칙을 깨뜨려 쓰기 성능을 저하시킨다.
+- I/O 과금은 buffer pool hit ratio와 직결되므로, 인스턴스를 한 단계 크게 가져가는 것이 총비용을 줄일 수 있다.
+- Failover priority 미설정, DNS 캐싱, 장시간 트랜잭션은 운영에서 자주 발생하는 함정이다.
+- 대량 DML은 배치로 분할하여 실행해야 redo log 폭발과 I/O 비용 급증을 방지한다.

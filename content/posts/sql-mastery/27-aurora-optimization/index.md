@@ -280,3 +280,11 @@ def create_order(user_id, product_id):
 | `innodb_print_all_deadlocks` | 모든 deadlock을 에러 로그에 기록. 운영 환경에서 활성화 권장 |
 
 기존 MySQL에서 I/O 튜닝에 시간을 쏟았던 경험이 있다면, Aurora에서는 그 노력을 buffer pool 크기 최적화와 쿼리 최적화에 집중하는 것이 더 효과적이다.
+
+## 정리
+
+- 인덱스 설계, 쿼리 옵티마이저, 트랜잭션과 잠금은 기존 MySQL과 동일하게 동작한다.
+- Aurora의 survivable buffer pool은 프로세스 재시작 시에도 캐시를 유지하여 cold start를 방지한다.
+- Parallel query는 대용량 풀 스캔 쿼리에 적합하며, buffer pool에 캐싱된 hot data에는 오히려 비효율적이다.
+- `innodb_io_capacity`, `innodb_flush_method` 등 로컬 디스크 관련 파라미터는 Aurora에서 효과가 없다.
+- 쓰기 직후 읽기나 정합성이 중요한 읽기는 writer에서 실행하고, 분석/목록 조회는 reader로 분리한다.

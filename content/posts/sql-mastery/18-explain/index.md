@@ -486,4 +486,8 @@ possible_keys: idx_user_id,idx_status_created
 
 ## 정리
 
-EXPLAIN은 쿼리의 실행 계획을 읽는 도구다. `type` 컬럼으로 접근 방식을, `key`와 `key_len`으로 인덱스 활용 범위를, `Extra`로 추가 작업의 존재를 확인한다. EXPLAIN ANALYZE는 추정치와 실제 실행 결과를 비교하여 옵티마이저의 판단이 정확한지 검증할 수 있다. 느린 쿼리를 만났을 때 EXPLAIN부터 실행하는 습관이 가장 효과적인 최적화의 출발점이다.
+- `type` 컬럼으로 테이블 접근 방식을 판단한다. `ALL`(전체 스캔)에서 `const`(PK 단건 조회)까지, 위로 갈수록 효율적이다.
+- `key`와 `key_len`으로 인덱스 활용 범위를 확인한다. 복합 인덱스에서 key_len을 계산하면 어떤 컬럼까지 사용되었는지 알 수 있다.
+- `Extra` 컬럼에서 `Using filesort`, `Using temporary` 같은 추가 작업의 존재를 확인한다. `Using index`는 커버링 인덱스가 적용된 가장 효율적인 상태다.
+- EXPLAIN FORMAT=JSON은 옵티마이저의 비용 정보와 실제 사용된 인덱스 컬럼 목록을 제공한다.
+- EXPLAIN ANALYZE는 쿼리를 실제로 실행하여 추정치와 실제 결과를 비교한다. SELECT에만 사용한다.

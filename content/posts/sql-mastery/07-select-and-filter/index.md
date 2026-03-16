@@ -55,7 +55,7 @@ SELECT * FROM orders WHERE status IN ('pending', 'processing', 'shipped');
 
 `IN`은 내부적으로 동등 비교(`=`)의 OR 조합으로 처리된다. 값 목록이 상수이면 정렬 후 binary search로 매칭하므로 효율적이다. 인덱스가 있으면 각 값에 대해 index lookup을 수행한다.
 
-`IN`에 서브쿼리를 넣는 것도 가능하지만, 성능 특성이 달라진다. 이 부분은 서브쿼리 편에서 다룬다.
+`IN`에 서브쿼리를 넣는 것도 가능하지만, 성능 특성이 달라진다. 이 부분은 10편에서 다룬다.
 
 ### BETWEEN
 
@@ -285,4 +285,12 @@ WHERE status = 'pending' ORDER BY amount;
 
 이 결과는 `idx_status` 인덱스로 `status = 'pending'`을 필터링한 뒤, `amount` 순으로 filesort가 발생한다는 의미다. `(status, amount)` 복합 인덱스를 만들면 filesort를 제거할 수 있다.
 
-EXPLAIN의 상세한 읽는 방법은 실행 계획 편에서 다룬다. 지금은 `type`, `key`, `Extra` 세 컬럼만 확인하는 습관을 들이면 충분하다.
+EXPLAIN의 상세한 읽는 방법은 18편에서 다룬다. 지금은 `type`, `key`, `Extra` 세 컬럼만 확인하는 습관을 들이면 충분하다.
+
+## 정리
+
+- SELECT의 작성 순서와 실행 순서는 다르다. FROM, WHERE, SELECT, ORDER BY, LIMIT 순으로 실행된다.
+- 인덱스 컬럼을 가공하지 않아야 B-tree 탐색이 가능하다. 함수 적용, 암묵적 타입 변환, 후방 LIKE는 인덱스를 무력화한다.
+- ORDER BY가 인덱스 순서와 일치하면 filesort 없이 결과를 반환할 수 있다.
+- 깊은 페이지네이션에서 OFFSET은 성능 저하를 유발하므로, 커서 기반 페이지네이션이 대안이다.
+- 테이블의 대부분을 읽어야 하는 쿼리에서는 인덱스보다 풀 스캔이 더 효율적일 수 있다.

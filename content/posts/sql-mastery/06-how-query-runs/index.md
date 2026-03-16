@@ -368,3 +368,11 @@ EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 42;
 4. **Extra를 본다**: `Using filesort`나 `Using temporary`가 있으면 개선 여지가 있다.
 
 이 네 가지만 확인해도 대부분의 쿼리 성능 문제를 진단할 수 있다.
+
+## 정리
+
+- SQL은 파서, 전처리기, 옵티마이저, 실행기의 네 단계를 거쳐 실행된다.
+- 옵티마이저는 테이블 통계를 기반으로 비용이 가장 낮은 실행 계획을 선택한다.
+- 통계가 부정확하면 잘못된 실행 계획이 선택될 수 있으며, `ANALYZE TABLE`로 갱신한다.
+- `EXPLAIN`은 옵티마이저의 실행 계획을 보여주며, type, key, rows, Extra를 확인하는 것이 기본이다.
+- `EXPLAIN ANALYZE`는 추정치와 실측치를 비교하여 옵티마이저 판단의 정확성을 검증한다.

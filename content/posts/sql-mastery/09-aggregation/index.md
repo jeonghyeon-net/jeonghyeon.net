@@ -277,3 +277,11 @@ ORDER BY p.category_id, total_sold DESC;
 - 이 HAVING 조건은 집계 결과에 대한 것이므로 WHERE로 옮길 수 없다
 
 GROUP BY는 강력하지만, 대량 데이터에서 임시 테이블과 filesort를 유발하기 쉽다. EXPLAIN으로 `Using temporary`와 `Using filesort`를 확인하고, 가능하면 인덱스를 활용하도록 쿼리와 인덱스를 설계한다.
+
+## 정리
+
+- GROUP BY는 인덱스가 있으면 임시 테이블 없이 처리할 수 있고, 없으면 내부 임시 테이블을 생성한다.
+- COUNT(*)와 COUNT(컬럼)은 NULL 처리 방식이 다르다. COUNT(*)는 NULL을 포함한 모든 행을 센다.
+- HAVING은 집계 결과에 대한 조건에만 사용하고, 행 단위 필터링은 WHERE로 옮기는 것이 효율적이다.
+- Loose index scan은 그룹 수가 적고 MIN/MAX를 사용할 때 인덱스의 일부만 읽어 처리한다.
+- DISTINCT는 내부적으로 GROUP BY와 거의 동일하게 처리된다.
