@@ -5,11 +5,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
 	markdownutil "github.com/jeonghyeon-net/jeonghyeon.net/transformer/markdown-util"
 )
+
+var seriesPrefixRe = regexp.MustCompile(`^\d{2}-`)
 
 // escapeHTML replaces &, <, > with HTML entities.
 func escapeHTML(s string) string {
@@ -100,6 +103,111 @@ func copyFile(src, dst string) error {
 
 	_, err = io.Copy(out, in)
 	return err
+}
+
+// seriesPostTitle reads the H1 from a series post's index.md.
+// Falls back to converting the directory name to title case.
+func seriesPostTitle(dirPath string) string {
+	data, err := os.ReadFile(filepath.Join(dirPath, "index.md"))
+	if err != nil {
+		return seriesDirTitle(filepath.Base(dirPath))
+	}
+	h1 := markdownutil.ExtractH1(data)
+	if h1 == "" {
+		return seriesDirTitle(filepath.Base(dirPath))
+	}
+	return h1
+}
+
+// seriesDirTitle strips the 2-digit prefix and converts kebab-case to Title Case.
+func seriesDirTitle(name string) string {
+	if seriesPrefixRe.MatchString(name) {
+		name = name[3:]
+	}
+	parts := strings.Split(name, "-")
+	for i, p := range parts {
+		if len(p) > 0 {
+			parts[i] = strings.ToUpper(p[:1]) + p[1:]
+		}
+	}
+	return strings.Join(parts, " ")
+}
+
+// seriesNavHTML returns prev/next navigation HTML for a series post.
+// slashRel is the slash-separated relative path, e.g. "posts/series/01-title/index.md".
+// Returns empty string if the file is not part of a series.
+func seriesNavHTML(contentDir, slashRel string) string {
+	parts := strings.Split(slashRel, "/")
+	if len(parts) < 3 {
+		return ""
+	}
+
+	// Parent directory name (e.g., "01-why-go")
+	parentDir := parts[len(parts)-2]
+	if !seriesPrefixRe.MatchString(parentDir) {
+		return ""
+	}
+
+	// Grandparent directory contains all sibling series entries
+	grandparentRel := strings.Join(parts[:len(parts)-2], "/")
+	grandparentAbs := filepath.Join(contentDir, filepath.FromSlash(grandparentRel))
+
+	entries, err := os.ReadDir(grandparentAbs)
+	if err != nil {
+		return ""
+	}
+
+	var siblings []string
+	for _, e := range entries {
+		if e.IsDir() && seriesPrefixRe.MatchString(e.Name()) {
+			siblings = append(siblings, e.Name())
+		}
+	}
+	sort.Strings(siblings)
+
+	currentIdx := -1
+	for i, s := range siblings {
+		if s == parentDir {
+			currentIdx = i
+			break
+		}
+	}
+	if currentIdx == -1 {
+		return ""
+	}
+
+	var prev, next string
+	if currentIdx > 0 {
+		prevDir := siblings[currentIdx-1]
+		prevTitle := seriesPostTitle(filepath.Join(grandparentAbs, prevDir))
+		prev = `<a href="../` + prevDir + `/">` + escapeHTML(prevTitle) + `</a>`
+	}
+	if currentIdx < len(siblings)-1 {
+		nextDir := siblings[currentIdx+1]
+		nextTitle := seriesPostTitle(filepath.Join(grandparentAbs, nextDir))
+		next = `<a href="../` + nextDir + `/">` + escapeHTML(nextTitle) + `</a>`
+	}
+
+	if prev == "" && next == "" {
+		return ""
+	}
+
+	var b strings.Builder
+	b.WriteString("\n<hr>\n<table width=\"100%\"><tr>")
+	b.WriteString("<td>")
+	if prev != "" {
+		b.WriteString("&larr; ")
+		b.WriteString(prev)
+	}
+	b.WriteString("</td>")
+	b.WriteString("<td align=\"right\">")
+	if next != "" {
+		b.WriteString(next)
+		b.WriteString(" &rarr;")
+	}
+	b.WriteString("</td>")
+	b.WriteString("</tr></table>")
+	return b.String()
 }
 
 type pageInfo struct {
@@ -195,6 +303,8 @@ func Render(contentDir, distDir string) error {
 			} else {
 				imageURL = firstImage
 			}
+
+			bodyHTML += seriesNavHTML(contentDir, slashRel)
 
 			html := pageTemplate(cfg, title, description, pageURL, siteURL, imageURL, headerHTML, bodyHTML, footerHTML)
 
@@ -328,6 +438,8 @@ func RenderSingle(contentDir, mdPath string, w io.Writer) error {
 	} else {
 		imageURL = firstImage
 	}
+
+	bodyHTML += seriesNavHTML(contentDir, slashRel)
 
 	html := pageTemplate(cfg, title, description, pageURL, siteURL, imageURL, headerHTML, bodyHTML, footerHTML)
 	_, err = io.WriteString(w, html)
