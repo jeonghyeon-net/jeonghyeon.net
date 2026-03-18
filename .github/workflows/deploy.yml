@@ -37,7 +37,7 @@ jobs:
 
       - name: Archive to Wayback Machine
         continue-on-error: true
-        run: curl -s "https://web.archive.org/save/https://jeonghyeon.net" > /dev/null
+        run: curl -s "https://web.archive.org/save/https://jeonghyeon.net/sitemap.xml" > /dev/null
 
       - name: Delete old deployments
         continue-on-error: true
