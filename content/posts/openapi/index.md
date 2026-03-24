@@ -1,8 +1,10 @@
-# OpenAPI spec 있으면 타입 직접 치지 마라
+# OpenAPI spec 있는데 아직도 API 응답 타입 수동으로 만들고 있음?
 
-백엔드한테 OpenAPI spec 파일 받았음. 이걸로 TypeScript 타입이랑 API 호출 코드를 자동으로 뽑을 수 있음. 타입 손으로 만들고 fetch 코드 직접 짜고 spec 바뀔 때마다 수동으로 맞추는 짓을 아직도 하고 있으면 지금 당장 관둬라. spec 바뀌면 사람은 무조건 빠뜨림. 그리고 그건 런타임에 터짐.
+백엔드한테 OpenAPI spec 파일 받았음. 근데 이걸 눈으로 읽으면서 TypeScript interface를 수동으로 만들고, endpoint마다 fetch 함수를 직접 짜고, spec 바뀔 때마다 사람이 일일이 맞추고 있음? 이 과정을 전부 자동화할 수 있음.
 
-이게 별거 아닌 것 같은데, Stripe 출신 엔지니어 Alex Rattray가 Stainless라는 회사를 차려서 OpenAI, Anthropic, Cloudflare 공식 SDK를 이 방식으로 뽑고 있고, GitHub Octokit SDK도 OpenAPI spec에서 자동 생성함. 이미 업계 표준임. 아직도 타입 손으로 치고 있으면 시간을 버리고 있는 거임.
+spec에서 타입을 뽑고, API client를 생성하고, 심지어 React Query hook이랑 MSW mock까지 자동으로 만들어주는 도구들이 있음. spec이 바뀌면 코드젠 한 번 돌리면 끝이고, 사람이 빠뜨린 건 컴파일러가 잡아줌. 사람이 수동으로 맞추면 무조건 빠뜨림. 그리고 그건 런타임에 터짐.
+
+이게 별거 아닌 것 같은데, Stripe 출신 엔지니어 Alex Rattray가 Stainless라는 회사를 차려서 OpenAI, Anthropic, Cloudflare 공식 SDK를 이 방식으로 뽑고 있고, GitHub Octokit SDK도 OpenAPI spec에서 자동 생성함. 이미 업계 표준임.
 
 근데 도구가 존나 많음. 하나하나 정리해봄.
 
@@ -638,4 +640,4 @@ api.use(authMiddleware);
 
 ## 끝
 
-spec이 곧 타입이고 타입이 곧 문서임. spec에서 뭐가 바뀌면 코드젠 돌리는 순간 컴파일러가 터지는 곳을 전부 알려줌. 사람이 눈으로 찾아다닐 필요 없음. 타입을 손으로 치지 마라.
+spec이 곧 타입이고 타입이 곧 문서임. spec에서 endpoint가 바뀌거나 field가 바뀌면 코드젠 돌리는 순간 컴파일러가 영향받는 곳을 전부 에러로 알려줌. spec 보면서 interface 수동으로 고치고 fetch 함수 수동으로 맞추는 짓 하지 마라.
