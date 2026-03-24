@@ -4,5 +4,5 @@
 - [Dev tips](dev-tips/)
 - [Golang for nodejs developers](golang-for-nodejs-developers/)
 - [My gear](my-gear/)
-- [OpenAPI spec 하나로 Next.js 프론트엔드 굴리기](openapi/)
+- [OpenAPI spec 있으면 타입 직접 치지 마라](openapi/)
 - [Sql mastery](sql-mastery/)

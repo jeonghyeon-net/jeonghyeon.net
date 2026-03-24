@@ -1,152 +1,43 @@
-# OpenAPI spec 하나로 Next.js 프론트엔드 굴리기
+# OpenAPI spec 있으면 타입 직접 치지 마라
 
-백엔드에서 OpenAPI spec 파일을 넘겨줬음. 이제 프론트엔드에서 API를 호출해야 함. 여기서 갈림길이 나옴.
+백엔드한테 OpenAPI spec 파일 받았음. 이걸로 TypeScript 타입이랑 API 호출 코드를 자동으로 뽑을 수 있음. 타입 손으로 만들고 fetch 코드 직접 짜고 spec 바뀔 때마다 수동으로 맞추는 짓을 아직도 하고 있으면 지금 당장 관둬라. spec 바뀌면 사람은 무조건 빠뜨림. 그리고 그건 런타임에 터짐.
 
-하나는 spec을 눈으로 읽으면서 타입을 하나하나 만들고, fetch 함수를 직접 짜는 거임. 다른 하나는 spec에서 타입, client, hook, mock을 자동 생성하는 거임. 전자는 spec이 바뀔 때마다 사람이 수동으로 반영해야 하고, 빠뜨리면 런타임에 터짐. 후자는 코드젠 한 번 돌리면 끝이고, 빠뜨리면 컴파일러가 알려줌.
+이게 별거 아닌 것 같은데, Stripe 출신 엔지니어 Alex Rattray가 Stainless라는 회사를 차려서 OpenAI, Anthropic, Cloudflare 공식 SDK를 이 방식으로 뽑고 있고, GitHub Octokit SDK도 OpenAPI spec에서 자동 생성함. 이미 업계 표준임. 아직도 타입 손으로 치고 있으면 시간을 버리고 있는 거임.
 
-이건 소규모 사이드 프로젝트 얘기가 아님. Stripe의 개발자 플랫폼 팀에 있던 Alex Rattray라는 엔지니어가 나와서 Stainless라는 회사를 만들었는데, 이 회사가 OpenAI, Anthropic, Cloudflare의 공식 SDK를 OpenAPI spec 기반으로 생성하고 있음. GitHub의 Octokit SDK도 OpenAPI spec에서 자동 생성됨. "spec에서 코드를 뽑는다"는 접근이 업계 표준이 된 지 오래임.
+근데 도구가 존나 많음. 하나하나 정리해봄.
 
-문제는 도구가 너무 많다는 거임.
+## data fetching 라이브러리가 뭔데
 
-## 뭐가 있는지부터 보자
+코드젠 도구가 "hook을 생성해준다"고 하는데 그 hook이 뭔지 모르면 뒤에 나오는 거 하나도 이해 안 됨. 그래서 이거부터 함.
 
-도구마다 "어디까지 생성해주느냐"가 다름. 타입만 뽑는 것부터 hook, mock, validation까지 전부 뱉는 것까지 스펙트럼이 넓음. 아래는 2025년 기준 수치임.
+### 왜 필요함
 
-| 도구 | npm 주간 다운로드 | 뭘 생성하나 |
-|---|---|---|
-| openapi-typescript | ~2.1M | `.d.ts` 타입 파일만. 런타임 코드 0 |
-| @hey-api/openapi-ts | ~977K | SDK 함수, 타입, Zod, TanStack Query hook |
-| openapi-generator | ~1.1M | 40개+ 언어 client. Java 기반 원조 |
-| orval | ~772K | hook, MSW mock, Zod, 타입 |
-| kubb | ~72K | 전부. 플러그인으로 조합 |
-| RTK Query codegen | ~129K | RTK Query API slice |
+`useState` + `useEffect` + `fetch`로 API 호출 직접 짜봤으면 알겠지만 이거 제대로 하려면 로딩 상태, 에러 처리, 캐시, 중복 요청 방지, refetch, 캐시 무효화, 낙관적 업데이트, 무한 스크롤 전부 직접 짜야 함. 이걸 매번 하면 코드가 개판이 됨. 그리고 이걸 버그 없이 짜는 건 생각보다 어려움.
 
-다운로드 수가 곧 품질은 아님. openapi-generator가 1.1M이지만 TypeScript 생성 품질은 하위권임. 각 도구가 풀고 있는 문제가 다르기 때문에, 숫자보다는 자기 상황에 맞는 걸 고르는 게 맞음.
+data fetching 라이브러리가 이걸 다 해결해줌. API에서 데이터 가져오고 캐싱하고 동기화하는 걸 hook 하나로 끝냄.
 
-이 글에서는 TypeScript + Next.js 환경에서 실제로 쓸 만한 도구 다섯 개를 다룸. openapi-generator는 polyglot 환경(하나의 spec에서 Go 서버 + TS client + Python SDK를 동시에 뽑아야 하는 경우) 전용이라 여기서는 빼겠음.
+### server state랑 client state
 
-## 타입만 뽑아서 직접 조립하기: openapi-typescript + openapi-fetch
+프론트엔드 상태는 두 종류임.
 
-가장 인기 있는 조합이고, 철학이 뚜렷함. "런타임 코드는 생성하지 않는다." spec에서 `.d.ts` 타입 파일만 뽑고, 실제 API 호출은 openapi-fetch라는 ~6kb짜리 fetch 래퍼가 그 타입을 활용해서 type-safe하게 처리함.
+**server state**는 API에서 가져온 데이터임. 사용자 목록, 주문 내역 같은 거. 원본이 서버에 있고 클라이언트는 복사본을 들고 있는 거라 시간 지나면 낡고, 다른 사용자가 바꿀 수도 있고, 동기화가 필요함.
 
-```bash
-npm install openapi-fetch
-npm install -D openapi-typescript
-```
+**client state**는 모달 열림닫힘, 다크 모드 토글 같은 거. 서버랑 상관없고 브라우저에서만 존재함.
 
-```bash
-npx openapi-typescript ./spec.json -o ./src/api/schema.d.ts
-```
+예전에는 Redux에 둘 다 때려넣었는데 지금은 분리하는 게 표준임. server state는 아래 라이브러리들이, client state는 `useState`나 Zustand, Jotai 같은 게 담당함. 아직도 Redux 하나에 전부 넣고 있으면 구조를 다시 생각해봐야 함.
 
-이렇게 하면 spec의 모든 endpoint 정보가 `paths`라는 타입에 담김. 이걸 client에 넘기면 끝임:
+### TanStack Query
 
-```typescript
-// src/api/client.ts
-import createClient from "openapi-fetch";
-import type { paths } from "./schema";
+원래 React Query였는데 Vue, Svelte, Solid, Angular까지 지원하면서 TanStack Query로 이름 바뀜. TanStack은 만든 사람 Tanner Linsley 이름에서 따온 브랜드명임. npm 주간 ~9.5M(2025년 기준)으로 압도적 1위. 이유 없이 1위가 아님.
 
-export const api = createClient<paths>({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL,
-});
-```
-
-호출할 때 path, query, body, response 타입이 전부 자동 추론됨:
-
-```typescript
-const { data, error } = await api.GET("/users/{id}", {
-  params: {
-    path: { id: "123" },
-    query: { include: "profile" },
-  },
-});
-// data 타입이 spec에서 추론됨. 잘못된 필드 넣으면 컴파일 에러.
-// error 타입도 spec에 정의된 에러 응답(4xx, 5xx) 기반으로 추론됨.
-```
-
-Server Component에서 바로 쓸 수 있고, fetch 기반이라 Next.js의 캐싱과 request deduplication이 그대로 적용됨:
-
-```typescript
-// app/users/[id]/page.tsx
-import { api } from "@/api/client";
-
-export default async function UserPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const { data } = await api.GET("/users/{id}", {
-    params: { path: { id } },
-  });
-
-  if (!data) return <div>Not Found</div>;
-  return <h1>{data.name}</h1>;
-}
-```
-
-여기까지는 완벽해 보이는데, Client Component에서 React Query를 쓰고 싶으면 얘기가 달라짐:
-
-```typescript
-"use client";
-
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api/client";
-
-export function UserProfile({ id }: { id: string }) {
-  const { data } = useQuery({
-    queryKey: ["user", id],
-    queryFn: () =>
-      api.GET("/users/{id}", {
-        params: { path: { id } },
-      }),
-    select: (res) => res.data,
-  });
-
-  return <div>{data?.name}</div>;
-}
-```
-
-queryKey를 직접 만들고, queryFn을 직접 연결하고, select로 response를 까줘야 함. endpoint가 5개일 때는 괜찮은데, 50개를 넘어가면 이 boilerplate가 고통이 됨. "hook을 자동으로 생성해주는 도구는 없나?"라는 생각이 드는 시점이 옴. 있음. 근데 그 전에, 위 코드에서 쓴 React Query가 뭔지부터 짚고 가겠음.
-
-## 잠깐 — data fetching 라이브러리 이야기
-
-코드젠 도구들이 "hook을 생성한다"고 할 때, 그 hook은 결국 어떤 data fetching 라이브러리의 hook임. 이 라이브러리들이 뭔지 모르면 뒤의 내용이 붕 뜨니까, 여기서 짚고 가겠음.
-
-### 왜 필요한가
-
-`useState` + `useEffect` + `fetch`로 API 호출을 직접 짜면 이런 걸 전부 손으로 처리해야 함:
-
-- 로딩/에러 상태 관리
-- 캐시 (같은 데이터를 여러 컴포넌트에서 요청할 때 중복 호출 방지)
-- 백그라운드 refetch (탭 전환 시 최신 데이터로 갱신)
-- 캐시 무효화 (mutation 후 관련 데이터 다시 가져오기)
-- 낙관적 업데이트 (서버 응답 전에 UI를 먼저 갱신)
-- 페이지네이션, 무한 스크롤
-
-이걸 매번 직접 구현하면 코드가 비대해지고 버그가 생김. data fetching 라이브러리는 이런 공통 문제를 추상화해서 해결해줌.
-
-### server state vs client state
-
-한 가지 중요한 구분이 있음. 프론트엔드에서 다루는 상태는 크게 두 종류임.
-
-**server state**: API에서 가져온 데이터. 사용자 목록, 게시물 내용, 주문 내역 등. 원본은 서버에 있고, 클라이언트는 복사본을 가지고 있는 거임. 시간이 지나면 낡을 수 있고(stale), 다른 사용자가 변경할 수 있고, 동기화가 필요함.
-
-**client state**: 브라우저에서만 존재하는 상태. 모달 열림/닫힘, 다크 모드 토글, 폼 입력값, 사이드바 펼침/접힘 등. 서버와 무관하고, 동기화할 대상이 없음.
-
-이 둘은 성격이 완전히 다른데, 예전에는 Redux 같은 하나의 전역 상태 관리 도구에 전부 넣었음. 지금은 분리하는 게 표준임. server state는 아래에서 설명할 라이브러리들이 담당하고, client state는 `useState`, Zustand, Jotai 같은 도구가 담당함.
-
-### TanStack Query (React Query)
-
-가장 널리 쓰이는 server state 관리 라이브러리. 원래 React Query라는 이름이었는데, Tanner Linsley(개발자 이름)가 React 외에 Vue, Svelte, Solid, Angular까지 지원하면서 TanStack Query로 이름을 바꿨음. TanStack은 이 개발자의 오픈소스 프로젝트 브랜드명임(TanStack Table, TanStack Router 등도 있음).
-
-핵심 API는 `useQuery`와 `useMutation` 두 개임:
+핵심은 `useQuery`랑 `useMutation` 두 개임.
 
 ```typescript
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// 데이터 조회
+// 데이터 가져오기
 function UserProfile({ id }: { id: string }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["user", id],
@@ -158,7 +49,7 @@ function UserProfile({ id }: { id: string }) {
   return <div>{data.name}</div>;
 }
 
-// 데이터 변경
+// 데이터 수정
 function UpdateButton({ id }: { id: string }) {
   const queryClient = useQueryClient();
 
@@ -169,7 +60,6 @@ function UpdateButton({ id }: { id: string }) {
         body: JSON.stringify({ name: newName }),
       }),
     onSuccess: () => {
-      // mutation 성공 후 관련 캐시를 무효화해서 최신 데이터를 다시 가져옴
       queryClient.invalidateQueries({ queryKey: ["user", id] });
     },
   });
@@ -178,20 +68,19 @@ function UpdateButton({ id }: { id: string }) {
 }
 ```
 
-`queryKey`는 캐시의 키임. 같은 `["user", "123"]`을 쓰는 컴포넌트가 여러 개 있어도 API 호출은 한 번만 일어나고, 결과를 공유함. `invalidateQueries`로 특정 키의 캐시를 무효화하면 해당 데이터를 쓰는 모든 컴포넌트가 자동으로 refetch함.
+`queryKey`가 캐시 키임. 같은 키를 쓰는 컴포넌트가 10개여도 API 호출은 한 번만 일어남. `invalidateQueries`로 캐시 날리면 관련 컴포넌트가 전부 알아서 refetch함. 이거 직접 구현하면 얼마나 개판이 되는지 해봤으면 알 거임.
 
-그 외 기능:
-- **staleTime**: 데이터가 "신선한" 상태로 유지되는 시간. 이 시간 안에는 refetch를 안 함.
-- **gcTime** (구 cacheTime): 캐시가 메모리에 남아있는 시간. 이 시간이 지나면 가비지 컬렉션됨.
-- **placeholderData**: 이전 데이터를 유지하면서 새 데이터를 가져올 때 사용. 페이지네이션에서 페이지 전환 시 빈 화면이 안 보이게 할 수 있음.
-- **optimistic updates**: `onMutate`에서 캐시를 먼저 업데이트하고, 서버 요청이 실패하면 `onError`에서 롤백하는 패턴.
-- **infinite queries**: `useInfiniteQuery`로 무한 스크롤 구현.
+그 외에 실무에서 자주 쓰는 기능들도 있음.
+
+**staleTime**은 이 시간 안에는 refetch를 안 함. **gcTime**(구 cacheTime)은 캐시 유지 시간인데 지나면 메모리에서 날아감. **placeholderData**는 이전 데이터 유지하면서 새 데이터 가져올 때 쓰는 건데 페이지네이션에서 페이지 전환할 때 빈 화면 안 보이게 할 수 있음. **optimistic updates**는 `onMutate`에서 캐시를 먼저 업데이트하고 서버 요청이 실패하면 `onError`에서 롤백하는 패턴임. **infinite queries**는 `useInfiniteQuery`로 무한 스크롤 구현하는 거.
+
+레퍼런스가 압도적으로 많음. 뭐 막히면 검색하면 거의 다 나옴. 뭘 쓸지 고민하지 말고 그냥 이거 쓰면 됨.
 
 ### SWR
 
-Vercel이 만든 data fetching 라이브러리. 이름은 HTTP 캐시 전략 `stale-while-revalidate`에서 옴. 캐시된(stale) 데이터를 먼저 보여주고, 백그라운드에서 최신 데이터를 가져와서(revalidate) 교체하는 방식임.
+Vercel이 만든 거. npm 주간 ~3.5M. 이름은 HTTP 캐시 전략 `stale-while-revalidate`에서 따온 거임.
 
-TanStack Query와 같은 문제를 풀지만 API가 더 단순함:
+TanStack Query보다 API가 단순함.
 
 ```typescript
 "use client";
@@ -209,9 +98,9 @@ function UserProfile({ id }: { id: string }) {
 }
 ```
 
-`useSWR`에 URL과 fetcher 함수를 넘기면 끝임. URL이 곧 캐시 키 역할을 함. TanStack Query처럼 `queryKey`와 `queryFn`을 분리해서 설정할 필요가 없음.
+URL이 곧 캐시 키임. queryKey 같은 거 따로 안 만들어도 됨. 이게 장점이자 단점인데 단순한 건 빠르게 되지만 복잡한 캐시 관계를 다루기엔 부족함.
 
-mutation은 `useSWRMutation`으로 처리함:
+mutation은 `useSWRMutation`으로 처리함.
 
 ```typescript
 "use client";
@@ -231,18 +120,15 @@ function UpdateButton({ id }: { id: string }) {
 }
 ```
 
-TanStack Query와의 차이:
-- **API 단순함**: 설정이 적고 배우기 쉬움. 소규모 프로젝트에 적합함.
-- **mutation이 약함**: `useSWRMutation`이 있긴 하지만, TanStack Query의 `useMutation`만큼 낙관적 업데이트, 롤백 같은 고급 패턴 지원이 풍부하지 않음.
-- **캐시 무효화가 단순함**: `mutate()` 하나로 처리. 유연하지만, 복잡한 캐시 관계(A를 수정하면 B, C도 갱신)를 관리하기엔 TanStack Query의 `invalidateQueries`가 더 편함.
-- **공식 DevTools 없음**: TanStack Query는 공식 DevTools로 캐시 상태를 시각적으로 확인할 수 있음. SWR은 공식 DevTools가 없고, 커뮤니티 패키지(`swr-devtools`)로 대체해야 함.
-- **Next.js 친화적**: Vercel이 만들었으니 Next.js와의 궁합이 좋음. 특히 App Router의 서버 사이드 data fetching과 자연스럽게 조합됨.
+솔직히 말하면 SWR은 단순한 것만 잘 됨. API가 깔끔해서 배우기 쉽고 소규모 프로젝트에는 좋음. 근데 mutation이 약함. 낙관적 업데이트, 롤백 같은 고급 패턴은 TanStack Query가 훨씬 풍부함. 캐시 무효화도 `mutate()` 하나로 처리하는데 복잡한 캐시 관계(A 수정하면 B, C도 갱신)는 다루기 어려움. 공식 DevTools가 없어서 커뮤니티 패키지(`swr-devtools`)로 대체해야 함. Vercel이 만들었으니 Next.js랑 궁합은 좋음.
+
+프로젝트가 복잡해질 가능성이 조금이라도 있으면 처음부터 TanStack Query 쓰는 게 나음. SWR에서 TanStack Query로 갈아타는 건 생각보다 귀찮음.
 
 ### RTK Query
 
-Redux Toolkit에 내장된 data fetching 솔루션. 별도 패키지를 설치할 필요 없이 `@reduxjs/toolkit`에 포함되어 있음.
+Redux Toolkit에 내장되어 있음. 별도 설치 없이 `@reduxjs/toolkit`에 포함.
 
-위의 두 라이브러리와 근본적으로 다른 점이 있음. TanStack Query와 SWR은 독립적인 캐시를 가지고 있는데, RTK Query는 Redux store 안에 캐시를 저장함. 그래서 Redux DevTools에서 API 캐시 상태를 직접 확인할 수 있음.
+TanStack Query나 SWR이랑 근본적으로 다른 점이 있는데, 캐시가 Redux store 안에 들어감. 그래서 Redux DevTools에서 API 캐시 상태를 직접 볼 수 있음. 이게 다른 라이브러리에 없는 고유한 장점임.
 
 ```typescript
 // src/api/baseApi.ts
@@ -284,15 +170,15 @@ function UserProfile({ id }: { id: string }) {
 }
 ```
 
-`providesTags`/`invalidatesTags`로 캐시 무효화를 선언적으로 관리함. `updateUser` mutation이 성공하면 같은 `User` 태그를 가진 query가 자동으로 refetch됨. 이 패턴이 명시적이라 대규모 프로젝트에서 캐시 관계를 추적하기 편함.
+`providesTags`/`invalidatesTags`로 캐시 무효화를 선언적으로 관리함. 태그 기반이라 어떤 mutation이 어떤 query를 갱신하는지 명시적으로 보임.
 
-다만 Redux Toolkit을 안 쓰고 있는 프로젝트에서 RTK Query만을 위해 Redux를 도입하는 건 과함. Redux store 설정, Provider 구성 등 보일러플레이트가 추가됨. 이미 Redux를 쓰고 있다면 자연스러운 선택이고, 아니라면 TanStack Query나 SWR이 더 가벼움.
+근데 Redux 안 쓰고 있는데 이것만을 위해 Redux를 도입하는 건 절대 하지 마라. store 설정, Provider 구성 등 보일러플레이트가 추가됨. 이미 Redux 쓰고 있으면 자연스러운 선택이고, 아니면 TanStack Query가 100배 가벼움.
 
-### GraphQL이라면: Apollo Client, urql
+### GraphQL이면 Apollo 아니면 urql
 
-위 세 라이브러리는 전부 REST API 기반인데, GraphQL을 쓰고 있다면 선택지가 다름.
+위 세 개는 전부 REST API용이고 GraphQL은 판이 다름.
 
-**Apollo Client**: GraphQL 생태계에서 가장 널리 쓰이는 client. TanStack Query가 REST에서 차지하는 위치를 GraphQL에서 차지하고 있음. normalized cache(응답을 엔티티 단위로 분해해서 저장)가 특징인데, `User:123`을 수정하면 이 엔티티를 참조하는 모든 query가 자동으로 갱신됨. 캐시 무효화를 명시적으로 할 필요가 줄어드는 대신, 캐시 정규화 동작을 이해해야 함.
+**Apollo Client**가 GraphQL에서 사실상 표준임. npm 주간 ~3.1M이고 Airbnb, Shopify, The New York Times가 씀. normalized cache라는 게 특징인데, 응답을 엔티티 단위로 분해해서 저장함. `User:123`을 수정하면 이 엔티티를 참조하는 모든 query가 자동 갱신됨. 이게 잘 동작하면 마법 같은데 캐시 정규화 동작을 이해해야 해서 러닝 커브가 있음.
 
 ```typescript
 "use client";
@@ -320,7 +206,7 @@ function UserProfile({ id }: { id: string }) {
 }
 ```
 
-**urql**: Apollo보다 가벼운 GraphQL client. Formidable(현 nearForm)이 만듦. Apollo의 normalized cache가 과하다고 느끼면 urql의 document cache(query 단위 캐시)가 더 단순함. 번들 사이즈도 Apollo(~50kb)의 약 1/3 수준(~15kb)임. 필요하면 `@urql/exchange-graphcache`로 normalized cache를 추가할 수 있음.
+**urql**은 Apollo보다 가벼운 대안임. Formidable(현 nearForm)이 만듦. 번들이 Apollo(~50kb)의 1/3 수준(~15kb)임. Apollo의 normalized cache가 과하다 싶으면 urql의 document cache가 더 단순함. 필요하면 `@urql/exchange-graphcache`로 normalized cache를 추가할 수도 있음.
 
 ```typescript
 "use client";
@@ -349,61 +235,128 @@ function UserProfile({ id }: { id: string }) {
 }
 ```
 
-GraphQL 프로젝트에서의 선택 기준: 복잡한 캐시 정규화가 필요하면 Apollo, 단순하고 가볍게 가고 싶으면 urql.
+다만 이건 OpenAPI 코드젠이랑 상관없는 얘기임. OpenAPI는 REST spec이고 GraphQL은 자체 schema가 있음. GraphQL 코드젠은 GraphQL Code Generator라는 별도 생태계임. 참고용으로 적은 거.
 
-다만 이 글의 주제인 OpenAPI 코드젠과는 직접 관련이 없음. OpenAPI는 REST API spec이고, GraphQL은 자체 schema 언어가 있음. GraphQL 코드젠은 GraphQL Code Generator라는 별도의 생태계가 있음.
+### 그래서 뭘 씀
 
-### 누가 뭘 쓰나
-
-공개적으로 확인 가능한 사용 사례:
-
-**TanStack Query**: npm 주간 다운로드 ~9.5M(2025년 기준)으로 압도적 1위. 공식 문서가 방대하고, 블로그 포스트, 강의, 커뮤니티 리소스도 가장 많음. Vercel의 Next.js 공식 예제에서도 TanStack Query를 data fetching 라이브러리로 사용하는 예시가 포함되어 있음.
-
-**SWR**: Vercel이 만들었고, Next.js 공식 문서에서 client-side data fetching 예시로 직접 소개함. npm 주간 ~3.5M. Vercel 자체 프로덕트에서도 사용됨.
-
-**RTK Query**: Redux Toolkit의 일부이고, Redux는 여전히 대규모 엔터프라이즈 프로젝트에서 많이 쓰임. Meta의 여러 내부 도구, Spotify의 웹 앱 등 Redux 기반 프로젝트에서 RTK Query를 채택하는 추세임.
-
-**Apollo Client**: Airbnb, Shopify, The New York Times 등 GraphQL을 도입한 기업에서 사실상 표준으로 쓰임. npm 주간 ~3.1M.
-
-**urql**: Apollo보다 작은 규모지만 Formidable(현 nearForm) 외에도 여러 스타트업에서 사용 중.
-
-### 결론부터 말하면: TanStack Query
-
-"가장 단순하면서도 복잡한 것까지 다 되는 게 뭐냐"라는 질문에는 TanStack Query가 답임.
-
-단순한 GET 요청은 `useQuery` 하나로 끝나고, 낙관적 업데이트, 무한 스크롤, 병렬 쿼리, dependent 쿼리, prefetching, SSR hydration 같은 복잡한 시나리오도 전부 커버함. 공식 문서가 가장 방대하고, Stack Overflow, 블로그, YouTube 강의 등 레퍼런스가 압도적으로 많음. 뭔가 막히면 검색하면 거의 다 나옴.
-
-SWR은 더 단순하지만 "단순한 것만 잘 됨". mutation 쪽이 약하고 복잡한 캐시 관계를 다루기 어려움. RTK Query는 강력하지만 Redux 생태계에 묶여 있음. 특별한 이유가 없으면 TanStack Query로 시작하는 게 가장 안전한 선택임.
-
-### 정리: 어떤 라이브러리를 고를 것인가
-
-| 상황 | 선택 |
+| 상황 | 답 |
 |---|---|
-| REST API, 새 프로젝트 | TanStack Query |
-| REST API, 단순한 data fetching 위주 | SWR |
-| REST API, Redux 이미 쓰고 있음 | RTK Query |
-| GraphQL, 복잡한 캐시 필요 | Apollo Client |
-| GraphQL, 가볍게 가고 싶음 | urql |
+| REST, 새 프로젝트 | TanStack Query |
+| REST, 단순한 것만 | SWR |
+| REST, Redux 쓰고 있음 | RTK Query |
+| GraphQL, 캐시 중요 | Apollo Client |
+| GraphQL, 가볍게 | urql |
 
-REST API + Next.js 조합이면 사실상 **TanStack Query vs SWR** 양자택일이고, Redux 쓰고 있으면 RTK Query가 추가 선택지임. 확신이 없으면 TanStack Query.
+고민하지 말고 TanStack Query 쓰면 됨. 단순한 GET은 `useQuery` 하나로 끝나면서 낙관적 업데이트, 무한 스크롤, 병렬 쿼리, prefetching, SSR hydration 같은 복잡한 것도 전부 됨. 레퍼런스도 압도적임.
 
-### 코드젠과의 관계
+## 본론인 코드젠 도구
 
-이 라이브러리들의 hook을 직접 짜는 대신, 코드젠 도구가 OpenAPI spec에서 자동으로 생성해주는 거임. 어떤 라이브러리의 hook을 생성하느냐에 따라 코드젠 도구 선택이 달라짐:
+여기까지가 배경이었고 여기서부터 본론임. 코드젠 도구가 뭘 하냐면 OpenAPI spec에서 위에서 설명한 라이브러리들의 hook을 자동으로 뽑아줌. 어떤 라이브러리 hook을 뽑느냐에 따라 쓸 도구가 달라짐.
 
-- **TanStack Query**: @hey-api/openapi-ts, orval, kubb 전부 지원
-- **SWR**: orval, kubb 지원
-- **RTK Query**: RTK Query codegen 전용
+- **TanStack Query** hook을 뽑고 싶으면 @hey-api/openapi-ts, orval, kubb 전부 됨
+- **SWR** hook은 orval, kubb가 됨
+- **RTK Query** hook은 RTK Query codegen 전용
 
-TanStack Query가 가장 선택지가 넓음. 특별한 이유가 없으면 TanStack Query 기반으로 가는 게 코드젠 도구 선택의 폭을 가장 넓게 유지하는 방법임.
+도구별 규모는 이 정도(2025년 기준).
 
-## hook까지 다 생성하기: 세 갈래
+| 도구 | npm 주간 다운로드 | 뭘 생성하나 |
+|---|---|---|
+| openapi-typescript | ~2.1M | `.d.ts` 타입만. 런타임 코드 0 |
+| @hey-api/openapi-ts | ~977K | SDK 함수, 타입, Zod, TanStack Query hook |
+| openapi-generator | ~1.1M | 40개+ 언어. Java 기반 원조. TS 품질 별로 |
+| orval | ~772K | hook, MSW mock, Zod, 타입 |
+| kubb | ~72K | 전부. 플러그인 조합 |
+| RTK Query codegen | ~129K | RTK Query API slice |
 
-### @hey-api/openapi-ts — 올인원 SDK 생성기
+openapi-generator는 다운로드 수는 많은데 TS 전용으로 쓰기엔 품질이 떨어짐. Java 기반이고 생성 코드가 TypeScript 관용구에 안 맞음. Go + TS + Python을 하나의 spec에서 동시에 뽑아야 하는 polyglot 환경이 아니면 쓸 이유 없음. 나머지 다섯 개를 다룸.
 
-이름이 좀 낯선데, 원래 `openapi-typescript-codegen`이라는 꽤 유명한 프로젝트였음. 원작자(ferdikoomen)가 관리를 멈추면서 2024년 5월에 공식 archived됐고, 커뮤니티가 fork해서 `@hey-api/openapi-ts`라는 이름으로 이어받은 거임. npm 주간 977K, GitHub에 Vercel과 PayPal이 사용한다고 명시되어 있을 만큼 주류 도구임.
+## openapi-typescript + openapi-fetch
 
-원본과 달리 플러그인 아키텍처로 재설계됨. 타입, SDK 함수, TanStack Query hook, Zod schema를 플러그인 단위로 골라서 생성할 수 있음:
+가장 많이 쓰이는 조합임. 런타임 코드를 생성하지 않는다는 게 핵심임. spec에서 `.d.ts` 타입 파일만 뽑고, openapi-fetch라는 ~6kb짜리 fetch 래퍼가 그 타입으로 type safety를 제공함. 번들에 추가되는 게 거의 없음.
+
+```bash
+npm install openapi-fetch
+npm install -D openapi-typescript
+```
+
+```bash
+npx openapi-typescript ./spec.json -o ./src/api/schema.d.ts
+```
+
+이러면 spec의 모든 endpoint 정보가 `paths` 타입에 담김. client에 넘기면 끝임.
+
+```typescript
+// src/api/client.ts
+import createClient from "openapi-fetch";
+import type { paths } from "./schema";
+
+export const api = createClient<paths>({
+  baseUrl: process.env.NEXT_PUBLIC_API_URL,
+});
+```
+
+호출하면 path, query, body, response 타입이 전부 자동 추론됨.
+
+```typescript
+const { data, error } = await api.GET("/users/{id}", {
+  params: {
+    path: { id: "123" },
+    query: { include: "profile" },
+  },
+});
+// data, error 타입 전부 spec에서 추론됨. 잘못된 필드 넣으면 컴파일 에러.
+```
+
+Server Component에서 바로 쓸 수 있고 fetch 기반이라 Next.js 캐싱이 그대로 적용됨.
+
+```typescript
+// app/users/[id]/page.tsx
+import { api } from "@/api/client";
+
+export default async function UserPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const { data } = await api.GET("/users/{id}", {
+    params: { path: { id } },
+  });
+
+  if (!data) return <div>Not Found</div>;
+  return <h1>{data.name}</h1>;
+}
+```
+
+여기까진 좋은데 Client Component에서 TanStack Query 쓰려면 boilerplate가 생김.
+
+```typescript
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/api/client";
+
+export function UserProfile({ id }: { id: string }) {
+  const { data } = useQuery({
+    queryKey: ["user", id],
+    queryFn: () =>
+      api.GET("/users/{id}", {
+        params: { path: { id } },
+      }),
+    select: (res) => res.data,
+  });
+
+  return <div>{data?.name}</div>;
+}
+```
+
+queryKey 직접 만들고 queryFn 연결하고 select로 response 까줘야 함. endpoint 5개면 괜찮은데 50개 넘으면 진짜 고통임. 이 노가다가 싫으면 아래 도구들이 hook을 자동 생성해줌.
+
+## @hey-api/openapi-ts
+
+이름이 좀 이상한데 이유가 있음. 원래 `openapi-typescript-codegen`이라는 꽤 유명한 프로젝트였음. 근데 원작자(ferdikoomen)가 관리를 때려치면서 2024년 5월에 archived됨. 커뮤니티가 fork해서 `@hey-api/openapi-ts`로 이어받은 거임. 이름만 낯설지 npm 주간 977K이고 GitHub에 Vercel이랑 PayPal이 쓴다고 적혀있음. 실제로 주류 도구임.
+
+원본이랑 다르게 플러그인 아키텍처로 재설계됨. 타입, SDK 함수, TanStack Query hook, Zod schema를 골라서 생성할 수 있음.
 
 ```typescript
 // openapi-ts.config.ts
@@ -427,7 +380,7 @@ export default defineConfig({
 npx @hey-api/openapi-ts
 ```
 
-아까 openapi-fetch에서 직접 짰던 boilerplate가 사라짐:
+아까 openapi-fetch에서 직접 짰던 boilerplate가 사라짐.
 
 ```typescript
 "use client";
@@ -443,11 +396,13 @@ export function UserProfile({ id }: { id: string }) {
 }
 ```
 
-endpoint마다 `getUserOptions`, `createUserMutation` 같은 option factory가 자동 생성되고, queryKey 관리도 알아서 됨. Zod schema가 필요하면 플러그인 하나(`@hey-api/zod`) 추가하면 되고, API response를 런타임에 검증할 수 있음. 외부 API를 호출하는 경우 spec과 실제 응답이 다를 수 있는데, 그때 유용함.
+endpoint마다 `getUserOptions`, `createUserMutation` 같은 option factory가 자동 생성되고 queryKey 관리도 알아서 됨. 아까 50개 endpoint에서 고통받던 게 여기서 해결됨.
 
-### orval — mock이 진짜 강점
+Zod schema 필요하면 `@hey-api/zod` 플러그인 추가하면 됨. API response를 런타임에 검증할 수 있어서 외부 API처럼 spec이랑 실제 응답이 다를 수 있는 경우에 유용함.
 
-orval도 React Query hook을 생성하는데, 이 도구의 킬러 피처는 따로 있음. MSW mock handler와 Faker.js 기반 더미 데이터를 같이 생성한다는 거임.
+## orval
+
+TanStack Query hook 생성은 hey-api랑 비슷한데 orval의 킬러 피처는 따로 있음. MSW mock handler랑 Faker.js 기반 더미 데이터를 같이 생성해줌. 백엔드가 아직 안 만들어졌는데 프론트를 먼저 시작해야 하는 상황 자주 있지 않음? 그때 이거 쓰면 개꿀임.
 
 ```typescript
 // orval.config.ts
@@ -471,7 +426,7 @@ export default defineConfig({
 npx orval
 ```
 
-hook 사용은 직관적임:
+hook 사용은 직관적임.
 
 ```typescript
 "use client";
@@ -484,7 +439,7 @@ export function UserProfile({ id }: { id: string }) {
 }
 ```
 
-`mock: true`로 설정해뒀으니 MSW handler도 같이 생성됨:
+`mock: true` 설정해뒀으니 MSW handler도 같이 나옴.
 
 ```typescript
 import { getGetUserMockHandler } from "@/api/generated";
@@ -494,13 +449,13 @@ const worker = setupWorker(getGetUserMockHandler());
 worker.start();
 ```
 
-spec에 `name`이 string으로 정의되어 있으면 Faker.js가 사람 이름을 넣어주고, `email`이면 이메일 형식을 넣어줌. 백엔드 API가 아직 안 만들어진 상태에서 프론트엔드를 먼저 개발해야 하는 상황 — 꽤 흔한데, 이때 orval이 진짜 편함.
+spec에 정의된 타입 보고 Faker.js가 그럴듯한 더미 데이터를 넣어줌. `name` 필드에는 사람 이름이, `email` 필드에는 이메일 형식이 들어감. 백엔드 API 없이 프론트엔드 개발이 가능해짐.
 
-React Query 외에도 SWR, Vue Query, Svelte Query, Solid Query, Angular를 지원함. 프레임워크를 바꿔도 codegen 설정의 `client` 값만 바꾸면 됨.
+TanStack Query 외에 SWR, Vue Query, Svelte Query, Solid Query, Angular도 지원함. `client` 값만 바꾸면 됨.
 
-### kubb — 플러그인 파이프라인
+## kubb
 
-다른 도구들이 "이 조합을 생성해줌"이라면, kubb는 "뭘 생성할지 네가 정해"에 가까움. 타입, client, TanStack Query hook, SWR hook, Zod schema, Faker mock, MSW handler가 전부 별도 플러그인이고, 필요한 것만 골라서 조합함:
+다른 도구들이 "이 조합을 생성해줌"이라면 kubb는 "뭘 생성할지 네가 정해"임. 타입, hook, Zod, Faker, MSW 전부 별도 플러그인이고 필요한 것만 골라서 조합함. 가장 유연하지만 초기 설정이 좀 더 필요함.
 
 ```bash
 npm install -D @kubb/cli @kubb/plugin-oas @kubb/plugin-ts \
@@ -531,19 +486,19 @@ export default defineConfig({
 npx kubb generate
 ```
 
-TanStack Query 대신 SWR을 쓰고 싶으면 `@kubb/plugin-swr`로 교체. MSW mock이 필요하면 `@kubb/plugin-msw` 추가. 플러그인끼리 의존성을 선언할 수 있어서 generation 순서가 자동으로 정해짐.
+SWR 쓰고 싶으면 `@kubb/plugin-swr`로 교체, MSW 필요하면 `@kubb/plugin-msw` 추가. 플러그인끼리 의존성을 선언할 수 있어서 generation 순서가 자동으로 정해짐.
 
-npm 주간 ~72K로 다른 도구들보다 사용자가 적지만, 유연성이 필요한 프로젝트에서 선택되는 도구임.
+npm 주간 ~72K로 위 도구들보다 사용자가 적지만 유연성이 필요한 프로젝트에서는 이게 답임.
 
-## Redux 쓰고 있으면: RTK Query codegen
+## RTK Query codegen
 
-위 도구들은 전부 React Query(TanStack Query) 중심인데, Redux Toolkit을 이미 쓰고 있는 프로젝트라면 별도의 data fetching 라이브러리를 추가하는 것보다 RTK Query codegen이 자연스러움. Redux Toolkit 공식 monorepo에 포함된 도구임.
+Redux Toolkit 쓰고 있으면 이거. 다른 거 볼 필요 없음. Redux Toolkit 공식 monorepo에 포함된 도구임.
 
 ```bash
 npm install -D @rtk-query/codegen-openapi
 ```
 
-먼저 base API를 정의하고:
+base API부터 정의함.
 
 ```typescript
 // src/api/baseApi.ts
@@ -557,7 +512,7 @@ export const baseApi = createApi({
 });
 ```
 
-codegen 설정:
+codegen 설정.
 
 ```typescript
 // openapi-config.ts
@@ -589,25 +544,23 @@ export function UserProfile({ id }: { id: string }) {
 }
 ```
 
-spec에 tag 정보가 정의되어 있으면 `providesTags`/`invalidatesTags`가 자동 설정되어서 mutation 후 관련 query 캐시가 자동 무효화됨. Redux DevTools에서 API 상태를 바로 확인할 수 있다는 점도 Redux 생태계의 장점임.
+spec에 tag 정보가 있으면 `providesTags`/`invalidatesTags`가 자동 설정돼서 캐시 무효화도 알아서 됨.
 
-## 그래서 뭘 쓰라는 건가
+## 뭘 쓸지 모르겠으면
 
-정답은 없지만, 판단 기준은 있음.
+**endpoint 적고 Server Component 위주면** openapi-typescript + openapi-fetch. 가장 가볍고 black box 없음.
 
-**Server Component 위주이고 endpoint가 많지 않으면** openapi-typescript + openapi-fetch. 가장 가볍고, 생성 코드가 타입뿐이라 black box가 없음. 번들에 추가되는 것도 거의 없음. hook boilerplate가 감당 가능한 수준이면 이게 제일 깔끔함.
+**endpoint 많고 hook 직접 짜기 싫으면** @hey-api/openapi-ts 또는 orval. mock 필요하면 orval, 플러그인 생태계 중요하면 hey-api.
 
-**endpoint가 수십 개 이상이고 React Query hook을 전부 직접 짜기 싫으면** @hey-api/openapi-ts 또는 orval. 둘 다 hook을 자동 생성해줌. 차이는:
-- 백엔드가 아직 없어서 mock이 필요하면 → orval
-- 플러그인 생태계와 SDK 함수가 중요하면 → @hey-api/openapi-ts
+**생성물 세밀하게 제어하고 싶으면** kubb.
 
-**생성물을 세밀하게 제어하고 싶으면** kubb. 초기 설정이 좀 더 들어가지만 가장 유연함.
+**Redux 쓰고 있으면** RTK Query codegen. 다른 거 볼 필요 없음.
 
-**Redux Toolkit 쓰고 있으면** RTK Query codegen.
+## 세팅
 
-## 어떤 도구를 쓰든 해야 하는 것들
+어떤 도구를 골랐든 해야 하는 것들.
 
-### codegen script 등록
+### codegen script
 
 ```json
 {
@@ -618,18 +571,18 @@ spec에 tag 정보가 정의되어 있으면 `providesTags`/`invalidatesTags`가
 }
 ```
 
-`codegen`에 들어갈 커맨드는 도구마다 다름. `npx openapi-typescript ...`일 수도 있고, `npx orval`이나 `npx @hey-api/openapi-ts`일 수도 있음. `postinstall`에 걸어두면 `npm install` 후 자동으로 코드젠이 실행됨. 새 팀원이 clone 후 install만 해도 바로 돌아가는 상태가 됨.
+`postinstall`에 걸어두면 `npm install` 후 자동 실행됨. 새 팀원이 clone 후 install만 하면 바로 돌아감.
 
-### CI에서 검증
+### CI 검증
 
 ```yaml
 - run: npm run codegen
 - run: git diff --exit-code src/api/
 ```
 
-spec이 바뀌었는데 코드젠을 안 돌린 경우 CI에서 잡아줌.
+spec 바뀌었는데 코드젠 안 돌린 경우 CI에서 잡아줌.
 
-생성 코드를 git에 안 넣는 전략도 있음. `.gitignore`에 생성 디렉토리를 넣고, 빌드 전에 매번 코드젠을 돌리는 방식:
+생성 코드를 git에 안 넣는 전략도 있음.
 
 ```json
 {
@@ -640,11 +593,11 @@ spec이 바뀌었는데 코드젠을 안 돌린 경우 CI에서 잡아줌.
 }
 ```
 
-어느 쪽이든 "사람이 생성 코드를 직접 수정하지 않는다"는 원칙만 지키면 됨. 생성 결과를 바꾸고 싶으면 도구의 설정을 바꿔야지, 생성된 파일을 손으로 고치면 다음 코드젠에서 덮어써짐.
+어느 쪽이든 "생성된 파일을 직접 수정하지 않는다"가 원칙임. 바꾸고 싶으면 도구 설정을 바꿔야지 생성된 파일 손대면 다음 코드젠에서 덮어써짐.
 
-### spec 파일 관리
+### spec 관리
 
-spec을 로컬에 복사해서 쓸 수도 있고, URL에서 직접 가져올 수도 있음. 대부분의 도구가 input에 remote URL을 지원함. @hey-api/openapi-ts 기준 예시:
+로컬에 복사해서 쓸 수도 있고 URL에서 직접 가져올 수도 있음. @hey-api/openapi-ts 기준으로는 이렇게 됨.
 
 ```typescript
 // openapi-ts.config.ts
@@ -655,11 +608,11 @@ export default defineConfig({
 });
 ```
 
-orval이라면 `input: { target: "https://api.example.com/openapi.json" }` 형태가 됨. 백엔드 배포 시 최신 spec을 가져와서 코드젠을 돌리는 CI pipeline을 구성하면 수동 복사가 필요 없어짐.
+orval은 `input: { target: "https://..." }` 형태임. 백엔드 배포할 때 최신 spec 가져와서 코드젠 돌리는 CI pipeline 구성하면 수동 복사 안 해도 됨.
 
 ### 인증
 
-인증 토큰 주입 같은 공통 로직은 도구마다 interceptor/middleware 패턴을 지원함. openapi-fetch 기준 예시:
+공통 로직은 도구마다 interceptor/middleware를 지원함. openapi-fetch 기준으로는 이렇게 함.
 
 ```typescript
 import createClient, { type Middleware } from "openapi-fetch";
@@ -682,6 +635,6 @@ export const api = createClient<paths>({
 api.use(authMiddleware);
 ```
 
-## 정리
+## 끝
 
-spec이 곧 타입이고, 타입이 곧 문서임. spec에서 endpoint가 사라지거나 field 이름이 바뀌면, 코드젠 돌리는 순간 컴파일러가 영향받는 모든 곳을 에러로 알려줌. 사람이 눈으로 찾아다닐 필요가 없음. 도구는 많지만 핵심은 하나임: 사람이 타입을 손으로 관리하지 않는 것.
+spec이 곧 타입이고 타입이 곧 문서임. spec에서 뭐가 바뀌면 코드젠 돌리는 순간 컴파일러가 터지는 곳을 전부 알려줌. 사람이 눈으로 찾아다닐 필요 없음. 타입을 손으로 치지 마라.
