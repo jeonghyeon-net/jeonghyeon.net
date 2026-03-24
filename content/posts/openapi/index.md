@@ -1,4 +1,4 @@
-# OpenAPI Spec으로 Next.js 프론트엔드 코드젠하기
+# OpenAPI Spec 기반 Next.js 프론트엔드 개발: 코드젠 도구부터 data fetching 라이브러리까지
 
 백엔드에서 OpenAPI spec 파일을 넘겨줬음. 이제 프론트엔드에서 API를 호출해야 함. 여기서 갈림길이 나옴.
 
@@ -110,17 +110,286 @@ queryKey를 직접 만들고, queryFn을 직접 연결하고, select로 response
 
 ## 잠깐 — data fetching 라이브러리 이야기
 
-코드젠 도구들이 "hook을 생성한다"고 할 때, 그 hook은 결국 어떤 data fetching 라이브러리의 hook임. 대표적인 선택지가 세 가지 있음.
+코드젠 도구들이 "hook을 생성한다"고 할 때, 그 hook은 결국 어떤 data fetching 라이브러리의 hook임. 이 라이브러리들이 뭔지 모르면 뒤의 내용이 붕 뜨니까, 여기서 짚고 가겠음.
 
-**TanStack Query (React Query)**: 가장 널리 쓰이는 server state 관리 라이브러리. API 응답을 캐싱하고, 백그라운드에서 자동 refetch하고, 낙관적 업데이트를 지원함. `useQuery`로 데이터를 가져오고 `useMutation`으로 변경 요청을 보내는 패턴임. 위에서 본 queryKey, queryFn, select가 이 라이브러리의 API임. React뿐 아니라 Vue, Svelte, Solid, Angular 버전도 있어서 TanStack Query라는 이름으로 통합됨.
+### 왜 필요한가
 
-**SWR**: Vercel이 만든 data fetching 라이브러리. TanStack Query보다 API가 단순함. "stale-while-revalidate" 전략이 이름의 유래인데, 캐시된 데이터를 먼저 보여주고 백그라운드에서 최신 데이터를 가져오는 방식임. 설정이 적고 가볍지만, mutation 처리나 캐시 무효화 같은 고급 기능은 TanStack Query가 더 풍부함.
+`useState` + `useEffect` + `fetch`로 API 호출을 직접 짜면 이런 걸 전부 손으로 처리해야 함:
 
-**RTK Query**: Redux Toolkit에 내장된 data fetching 솔루션. 별도의 라이브러리를 추가하지 않고 Redux 생태계 안에서 server state를 관리할 수 있음. Redux DevTools로 API 캐시 상태를 직접 확인할 수 있다는 고유한 장점이 있음. 다만 Redux Toolkit을 안 쓰고 있는 프로젝트에서 이것만을 위해 Redux를 도입하는 건 과함.
+- 로딩/에러 상태 관리
+- 캐시 (같은 데이터를 여러 컴포넌트에서 요청할 때 중복 호출 방지)
+- 백그라운드 refetch (탭 전환 시 최신 데이터로 갱신)
+- 캐시 무효화 (mutation 후 관련 데이터 다시 가져오기)
+- 낙관적 업데이트 (서버 응답 전에 UI를 먼저 갱신)
+- 페이지네이션, 무한 스크롤
 
-이 세 라이브러리는 전부 "server state"를 다루는 도구임. 버튼 클릭 여부나 모달 열림/닫힘 같은 "client state"와는 관심사가 다름. client state는 `useState`나 Zustand, Jotai 같은 도구가 담당하고, server state는 위 라이브러리들이 담당함.
+이걸 매번 직접 구현하면 코드가 비대해지고 버그가 생김. data fetching 라이브러리는 이런 공통 문제를 추상화해서 해결해줌.
 
-코드젠과의 관계는 단순함. 이 라이브러리들의 hook을 직접 짜는 대신, 코드젠 도구가 spec에서 자동으로 생성해주는 거임. 어떤 라이브러리의 hook을 생성하느냐에 따라 코드젠 도구 선택이 달라짐:
+### server state vs client state
+
+한 가지 중요한 구분이 있음. 프론트엔드에서 다루는 상태는 크게 두 종류임.
+
+**server state**: API에서 가져온 데이터. 사용자 목록, 게시물 내용, 주문 내역 등. 원본은 서버에 있고, 클라이언트는 복사본을 가지고 있는 거임. 시간이 지나면 낡을 수 있고(stale), 다른 사용자가 변경할 수 있고, 동기화가 필요함.
+
+**client state**: 브라우저에서만 존재하는 상태. 모달 열림/닫힘, 다크 모드 토글, 폼 입력값, 사이드바 펼침/접힘 등. 서버와 무관하고, 동기화할 대상이 없음.
+
+이 둘은 성격이 완전히 다른데, 예전에는 Redux 같은 하나의 전역 상태 관리 도구에 전부 넣었음. 지금은 분리하는 게 표준임. server state는 아래에서 설명할 라이브러리들이 담당하고, client state는 `useState`, Zustand, Jotai 같은 도구가 담당함.
+
+### TanStack Query (React Query)
+
+가장 널리 쓰이는 server state 관리 라이브러리. 원래 React Query라는 이름이었는데, Tanner Linsley(개발자 이름)가 React 외에 Vue, Svelte, Solid, Angular까지 지원하면서 TanStack Query로 이름을 바꿨음. TanStack은 이 개발자의 오픈소스 프로젝트 브랜드명임(TanStack Table, TanStack Router 등도 있음).
+
+핵심 API는 `useQuery`와 `useMutation` 두 개임:
+
+```typescript
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+// 데이터 조회
+function UserProfile({ id }: { id: string }) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["user", id],
+    queryFn: () => fetch(`/api/users/${id}`).then((res) => res.json()),
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error</div>;
+  return <div>{data.name}</div>;
+}
+
+// 데이터 변경
+function UpdateButton({ id }: { id: string }) {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (newName: string) =>
+      fetch(`/api/users/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: newName }),
+      }),
+    onSuccess: () => {
+      // mutation 성공 후 관련 캐시를 무효화해서 최신 데이터를 다시 가져옴
+      queryClient.invalidateQueries({ queryKey: ["user", id] });
+    },
+  });
+
+  return <button onClick={() => mutation.mutate("새 이름")}>수정</button>;
+}
+```
+
+`queryKey`는 캐시의 키임. 같은 `["user", "123"]`을 쓰는 컴포넌트가 여러 개 있어도 API 호출은 한 번만 일어나고, 결과를 공유함. `invalidateQueries`로 특정 키의 캐시를 무효화하면 해당 데이터를 쓰는 모든 컴포넌트가 자동으로 refetch함.
+
+그 외 기능:
+- **staleTime**: 데이터가 "신선한" 상태로 유지되는 시간. 이 시간 안에는 refetch를 안 함.
+- **gcTime** (구 cacheTime): 캐시가 메모리에 남아있는 시간. 이 시간이 지나면 가비지 컬렉션됨.
+- **placeholderData**: 이전 데이터를 유지하면서 새 데이터를 가져올 때 사용. 페이지네이션에서 페이지 전환 시 빈 화면이 안 보이게 할 수 있음.
+- **optimistic updates**: `onMutate`에서 캐시를 먼저 업데이트하고, 서버 요청이 실패하면 `onError`에서 롤백하는 패턴.
+- **infinite queries**: `useInfiniteQuery`로 무한 스크롤 구현.
+
+### SWR
+
+Vercel이 만든 data fetching 라이브러리. 이름은 HTTP 캐시 전략 `stale-while-revalidate`에서 옴. 캐시된(stale) 데이터를 먼저 보여주고, 백그라운드에서 최신 데이터를 가져와서(revalidate) 교체하는 방식임.
+
+TanStack Query와 같은 문제를 풀지만 API가 더 단순함:
+
+```typescript
+"use client";
+
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+function UserProfile({ id }: { id: string }) {
+  const { data, error, isLoading } = useSWR(`/api/users/${id}`, fetcher);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error</div>;
+  return <div>{data.name}</div>;
+}
+```
+
+`useSWR`에 URL과 fetcher 함수를 넘기면 끝임. URL이 곧 캐시 키 역할을 함. TanStack Query처럼 `queryKey`와 `queryFn`을 분리해서 설정할 필요가 없음.
+
+mutation은 `useSWRMutation`으로 처리함:
+
+```typescript
+"use client";
+
+import useSWRMutation from "swr/mutation";
+
+async function updateUser(url: string, { arg }: { arg: { name: string } }) {
+  return fetch(url, {
+    method: "PATCH",
+    body: JSON.stringify(arg),
+  });
+}
+
+function UpdateButton({ id }: { id: string }) {
+  const { trigger } = useSWRMutation(`/api/users/${id}`, updateUser);
+  return <button onClick={() => trigger({ name: "새 이름" })}>수정</button>;
+}
+```
+
+TanStack Query와의 차이:
+- **API 단순함**: 설정이 적고 배우기 쉬움. 소규모 프로젝트에 적합함.
+- **mutation이 약함**: `useSWRMutation`이 있긴 하지만, TanStack Query의 `useMutation`만큼 낙관적 업데이트, 롤백 같은 고급 패턴 지원이 풍부하지 않음.
+- **캐시 무효화가 단순함**: `mutate()` 하나로 처리. 유연하지만, 복잡한 캐시 관계(A를 수정하면 B, C도 갱신)를 관리하기엔 TanStack Query의 `invalidateQueries`가 더 편함.
+- **공식 DevTools 없음**: TanStack Query는 공식 DevTools로 캐시 상태를 시각적으로 확인할 수 있음. SWR은 공식 DevTools가 없고, 커뮤니티 패키지(`swr-devtools`)로 대체해야 함.
+- **Next.js 친화적**: Vercel이 만들었으니 Next.js와의 궁합이 좋음. 특히 App Router의 서버 사이드 data fetching과 자연스럽게 조합됨.
+
+### RTK Query
+
+Redux Toolkit에 내장된 data fetching 솔루션. 별도 패키지를 설치할 필요 없이 `@reduxjs/toolkit`에 포함되어 있음.
+
+위의 두 라이브러리와 근본적으로 다른 점이 있음. TanStack Query와 SWR은 독립적인 캐시를 가지고 있는데, RTK Query는 Redux store 안에 캐시를 저장함. 그래서 Redux DevTools에서 API 캐시 상태를 직접 확인할 수 있음.
+
+```typescript
+// src/api/baseApi.ts
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
+export const api = createApi({
+  baseQuery: fetchBaseQuery({
+    baseUrl: process.env.NEXT_PUBLIC_API_URL,
+  }),
+  tagTypes: ["User"],
+  endpoints: (builder) => ({
+    getUser: builder.query({
+      query: (id: string) => `/users/${id}`,
+      providesTags: (result, error, id) => [{ type: "User", id }],
+    }),
+    updateUser: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/users/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [{ type: "User", id }],
+    }),
+  }),
+});
+
+export const { useGetUserQuery, useUpdateUserMutation } = api;
+```
+
+```typescript
+"use client";
+
+import { useGetUserQuery } from "@/api/baseApi";
+
+function UserProfile({ id }: { id: string }) {
+  const { data, isLoading } = useGetUserQuery(id);
+  if (isLoading) return <div>Loading...</div>;
+  return <div>{data?.name}</div>;
+}
+```
+
+`providesTags`/`invalidatesTags`로 캐시 무효화를 선언적으로 관리함. `updateUser` mutation이 성공하면 같은 `User` 태그를 가진 query가 자동으로 refetch됨. 이 패턴이 명시적이라 대규모 프로젝트에서 캐시 관계를 추적하기 편함.
+
+다만 Redux Toolkit을 안 쓰고 있는 프로젝트에서 RTK Query만을 위해 Redux를 도입하는 건 과함. Redux store 설정, Provider 구성 등 보일러플레이트가 추가됨. 이미 Redux를 쓰고 있다면 자연스러운 선택이고, 아니라면 TanStack Query나 SWR이 더 가벼움.
+
+### GraphQL이라면: Apollo Client, urql
+
+위 세 라이브러리는 전부 REST API 기반인데, GraphQL을 쓰고 있다면 선택지가 다름.
+
+**Apollo Client**: GraphQL 생태계에서 가장 널리 쓰이는 client. TanStack Query가 REST에서 차지하는 위치를 GraphQL에서 차지하고 있음. normalized cache(응답을 엔티티 단위로 분해해서 저장)가 특징인데, `User:123`을 수정하면 이 엔티티를 참조하는 모든 query가 자동으로 갱신됨. 캐시 무효화를 명시적으로 할 필요가 줄어드는 대신, 캐시 정규화 동작을 이해해야 함.
+
+```typescript
+"use client";
+
+import { useQuery, gql } from "@apollo/client";
+
+const GET_USER = gql`
+  query GetUser($id: ID!) {
+    user(id: $id) {
+      id
+      name
+      email
+    }
+  }
+`;
+
+function UserProfile({ id }: { id: string }) {
+  const { data, loading, error } = useQuery(GET_USER, {
+    variables: { id },
+  });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error</div>;
+  return <div>{data.user.name}</div>;
+}
+```
+
+**urql**: Apollo보다 가벼운 GraphQL client. Formidable(현 nearForm)이 만듦. Apollo의 normalized cache가 과하다고 느끼면 urql의 document cache(query 단위 캐시)가 더 단순함. 번들 사이즈도 Apollo(~50kb)의 약 1/3 수준(~15kb)임. 필요하면 `@urql/exchange-graphcache`로 normalized cache를 추가할 수 있음.
+
+```typescript
+"use client";
+
+import { useQuery } from "urql";
+
+const GET_USER = `
+  query GetUser($id: ID!) {
+    user(id: $id) {
+      id
+      name
+      email
+    }
+  }
+`;
+
+function UserProfile({ id }: { id: string }) {
+  const [result] = useQuery({
+    query: GET_USER,
+    variables: { id },
+  });
+
+  if (result.fetching) return <div>Loading...</div>;
+  if (result.error) return <div>Error</div>;
+  return <div>{result.data.user.name}</div>;
+}
+```
+
+GraphQL 프로젝트에서의 선택 기준: 복잡한 캐시 정규화가 필요하면 Apollo, 단순하고 가볍게 가고 싶으면 urql.
+
+다만 이 글의 주제인 OpenAPI 코드젠과는 직접 관련이 없음. OpenAPI는 REST API spec이고, GraphQL은 자체 schema 언어가 있음. GraphQL 코드젠은 GraphQL Code Generator라는 별도의 생태계가 있음.
+
+### 누가 뭘 쓰나
+
+공개적으로 확인 가능한 사용 사례:
+
+**TanStack Query**: npm 주간 다운로드 ~9.5M(2025년 기준)으로 압도적 1위. 공식 문서가 방대하고, 블로그 포스트, 강의, 커뮤니티 리소스도 가장 많음. Vercel의 Next.js 공식 예제에서도 TanStack Query를 data fetching 라이브러리로 사용하는 예시가 포함되어 있음.
+
+**SWR**: Vercel이 만들었고, Next.js 공식 문서에서 client-side data fetching 예시로 직접 소개함. npm 주간 ~3.5M. Vercel 자체 프로덕트에서도 사용됨.
+
+**RTK Query**: Redux Toolkit의 일부이고, Redux는 여전히 대규모 엔터프라이즈 프로젝트에서 많이 쓰임. Meta의 여러 내부 도구, Spotify의 웹 앱 등 Redux 기반 프로젝트에서 RTK Query를 채택하는 추세임.
+
+**Apollo Client**: Airbnb, Shopify, The New York Times 등 GraphQL을 도입한 기업에서 사실상 표준으로 쓰임. npm 주간 ~3.1M.
+
+**urql**: Apollo보다 작은 규모지만 Formidable(현 nearForm) 외에도 여러 스타트업에서 사용 중.
+
+### 결론부터 말하면: TanStack Query
+
+"가장 단순하면서도 복잡한 것까지 다 되는 게 뭐냐"라는 질문에는 TanStack Query가 답임.
+
+단순한 GET 요청은 `useQuery` 하나로 끝나고, 낙관적 업데이트, 무한 스크롤, 병렬 쿼리, dependent 쿼리, prefetching, SSR hydration 같은 복잡한 시나리오도 전부 커버함. 공식 문서가 가장 방대하고, Stack Overflow, 블로그, YouTube 강의 등 레퍼런스가 압도적으로 많음. 뭔가 막히면 검색하면 거의 다 나옴.
+
+SWR은 더 단순하지만 "단순한 것만 잘 됨". mutation 쪽이 약하고 복잡한 캐시 관계를 다루기 어려움. RTK Query는 강력하지만 Redux 생태계에 묶여 있음. 특별한 이유가 없으면 TanStack Query로 시작하는 게 가장 안전한 선택임.
+
+### 정리: 어떤 라이브러리를 고를 것인가
+
+| 상황 | 선택 |
+|---|---|
+| REST API, 새 프로젝트 | TanStack Query |
+| REST API, 단순한 data fetching 위주 | SWR |
+| REST API, Redux 이미 쓰고 있음 | RTK Query |
+| GraphQL, 복잡한 캐시 필요 | Apollo Client |
+| GraphQL, 가볍게 가고 싶음 | urql |
+
+REST API + Next.js 조합이면 사실상 **TanStack Query vs SWR** 양자택일이고, Redux 쓰고 있으면 RTK Query가 추가 선택지임. 확신이 없으면 TanStack Query.
+
+### 코드젠과의 관계
+
+이 라이브러리들의 hook을 직접 짜는 대신, 코드젠 도구가 OpenAPI spec에서 자동으로 생성해주는 거임. 어떤 라이브러리의 hook을 생성하느냐에 따라 코드젠 도구 선택이 달라짐:
 
 - **TanStack Query**: @hey-api/openapi-ts, orval, kubb 전부 지원
 - **SWR**: orval, kubb 지원
