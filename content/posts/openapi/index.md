@@ -50,10 +50,10 @@ function UserProfile({ id }: { id: string }) {
 }
 
 // 데이터 수정
-function UpdateButton({ id }: { id: string }) {
+function useUpdateUser(id: string) {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
+  return useMutation({
     mutationFn: (newName: string) =>
       fetch(`/api/users/${id}`, {
         method: "PATCH",
@@ -63,9 +63,9 @@ function UpdateButton({ id }: { id: string }) {
       queryClient.invalidateQueries({ queryKey: ["user", id] });
     },
   });
-
-  return <button onClick={() => mutation.mutate("새 이름")}>수정</button>;
 }
+
+// 사용: mutation.mutate("새 이름")
 ```
 
 `queryKey`가 캐시 키임. 같은 키를 쓰는 컴포넌트가 10개여도 API 호출은 한 번만 일어남. `invalidateQueries`로 캐시 날리면 관련 컴포넌트가 전부 알아서 refetch함. 이거 직접 구현하면 얼마나 개판이 되는지 해봤으면 알 거임.
@@ -114,10 +114,11 @@ async function updateUser(url: string, { arg }: { arg: { name: string } }) {
   });
 }
 
-function UpdateButton({ id }: { id: string }) {
-  const { trigger } = useSWRMutation(`/api/users/${id}`, updateUser);
-  return <button onClick={() => trigger({ name: "새 이름" })}>수정</button>;
+function useUpdateUser(id: string) {
+  return useSWRMutation(`/api/users/${id}`, updateUser);
 }
+
+// 사용: trigger({ name: "새 이름" })
 ```
 
 솔직히 말하면 SWR은 단순한 것만 잘 됨. API가 깔끔해서 배우기 쉽고 소규모 프로젝트에는 좋음. 근데 mutation이 약함. 낙관적 업데이트, 롤백 같은 고급 패턴은 TanStack Query가 훨씬 풍부함. 캐시 무효화도 `mutate()` 하나로 처리하는데 복잡한 캐시 관계(A 수정하면 B, C도 갱신)는 다루기 어려움. 공식 DevTools가 없어서 커뮤니티 패키지(`swr-devtools`)로 대체해야 함. Vercel이 만들었으니 Next.js랑 궁합은 좋음.
