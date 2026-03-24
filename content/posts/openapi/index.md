@@ -1,4 +1,4 @@
-# OpenAPI Spec 기반 Next.js 프론트엔드 개발: 코드젠 도구부터 data fetching 라이브러리까지
+# OpenAPI spec 하나로 Next.js 프론트엔드 굴리기
 
 백엔드에서 OpenAPI spec 파일을 넘겨줬음. 이제 프론트엔드에서 API를 호출해야 함. 여기서 갈림길이 나옴.
 
