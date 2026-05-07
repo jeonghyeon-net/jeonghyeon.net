@@ -3,4 +3,4 @@
 
 ![Valid HTML 4.01](/_layout/footer/valid-html401.webp) [![No CSS](/_layout/footer/nocss.webp)](https://nocss.club/) [![No JavaScript](/_layout/footer/javascript-zero.webp)](https://no-js.club/) ![Cookie Free](/_layout/footer/cookie-free.webp) [![RSS](/_layout/footer/rss.webp)](/feed.xml) ![WWW](/_layout/footer/www.webp)
 
-© 2026 jeonghyeon | [Email](mailto:help@jeonghyeon.net) | [GitHub](https://github.com/jeonghyeon-net) | [LinkedIn](https://www.linkedin.com/in/jeong-hyeon/)
+© 2026 jeonghyeon | [Email](mailto:help@jeonghyeon.net) | [GitHub](https://github.com/jeonghyeon-net)
