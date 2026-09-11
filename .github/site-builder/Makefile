@@ -4,8 +4,9 @@ SITE_BUILDER := $(SITE_BUILDER_DIR)/site-builder
 SITE_BUILDER_SOURCES := $(shell find $(SITE_BUILDER_DIR) -type f -name '*.go')
 SOURCE_DIR := $(REPO_ROOT)
 DIST_DIR := $(REPO_ROOT)/dist
+FIND_OPTIMIZABLE_IMAGES = find $(SOURCE_DIR) \( -path '$(SOURCE_DIR)/.git' -o -path '$(SOURCE_DIR)/.github' -o -path '$(DIST_DIR)' \) -prune -o -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.bmp" -o -name "*.tiff" \)
 
-.PHONY: prepare lint build optimize clean serve
+.PHONY: prepare lint build has-optimizable-images optimize clean serve
 
 $(SITE_BUILDER): $(SITE_BUILDER_SOURCES) $(SITE_BUILDER_DIR)/go.mod $(SITE_BUILDER_DIR)/go.sum
 	cd $(SITE_BUILDER_DIR) && go build -o site-builder .
@@ -24,9 +25,17 @@ build: clean $(SITE_BUILDER)
 
 MAX_DIM = 700
 
+has-optimizable-images:
+	@$(FIND_OPTIMIZABLE_IMAGES) -print -quit | grep -q .
+
 optimize:
-	@command -v cwebp >/dev/null 2>&1 || { echo "cwebp not found. Install libwebp."; exit 1; }
-	@set -e; find $(SOURCE_DIR) \( -path '$(SOURCE_DIR)/.git' -o -path '$(SOURCE_DIR)/.github' -o -path '$(DIST_DIR)' \) -prune -o -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.bmp" -o -name "*.tiff" \) -print | while IFS= read -r img; do \
+	@set -e; \
+	if ! $(FIND_OPTIMIZABLE_IMAGES) -print -quit | grep -q .; then \
+		echo "optimize complete (no images to convert)"; \
+		exit 0; \
+	fi; \
+	command -v cwebp >/dev/null 2>&1 || { echo "cwebp not found. Install libwebp."; exit 1; }; \
+	$(FIND_OPTIMIZABLE_IMAGES) -print | while IFS= read -r img; do \
 		webp="$${img%.*}.webp"; \
 		if command -v sips >/dev/null 2>&1; then \
 			w=$$(sips -g pixelWidth "$$img" | tail -1 | awk '{print $$2}'); \
@@ -52,8 +61,8 @@ optimize:
 			rm "$$markdown.bak"; \
 		done; \
 		rm "$$img"; \
-	done
-	@echo "optimize complete"
+	done; \
+	echo "optimize complete"
 
 clean:
 	rm -rf $(DIST_DIR)

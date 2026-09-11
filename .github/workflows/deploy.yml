@@ -27,7 +27,17 @@ jobs:
           go-version-file: .github/site-builder/go.mod
           cache-dependency-path: .github/site-builder/go.sum
 
+      - name: Check for images requiring optimization
+        id: image-optimization
+        run: |
+          if make --silent -C .github/site-builder has-optimizable-images; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install image optimization tools
+        if: steps.image-optimization.outputs.required == 'true'
         run: sudo apt-get update && sudo apt-get install --yes webp imagemagick
 
       - name: Optimize and fix lint violations
