@@ -1,0 +1,11 @@
+site:
+  name: 정현닷넷
+  url: https://jeonghyeon.net
+  author: 정현
+  description: 하고 싶은거 못참는 과잉 충동 100% 사람의 이야기
+  lang: ko
+  font: monospace
+  width: 700
+
+titles:
+  posts: 글

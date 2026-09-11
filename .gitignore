@@ -1,0 +1,19 @@
+# build
+dist/
+.github/site-builder/site-builder
+.last-build
+.wrangler
+
+# docs
+docs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
